@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Trainingsplan Maerz</title>
+
+  <meta name="theme-color" content="#ffffff" />
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    body { margin: 0; background: #f6f6f6; }
+    #app { max-width: 520px; margin: 0 auto; padding: 16px; }
+    .card { background: white; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+    .topRow { display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; gap: 8px; }
+    .topRow button { height: 40px; border-radius: 10px; border: 1px solid #ddd; background: #fff; }
+    .date { font-size: 18px; font-weight: 800; }
+    .subtitle { color: #666; margin-top: 2px; font-size: 13px; }
+    .exercise { border: 1px solid #eee; border-radius: 12px; padding: 12px; margin-top: 12px; }
+    .exHeader { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .exTitle { font-size: 18px; font-weight: 800; }
+    .exLink { font-size: 14px; text-decoration: none; border: 1px solid #ddd; padding: 6px 10px; border-radius: 999px; background: #fff; }
+    .done { display: inline-flex; gap: 8px; margin-top: 10px; }
+    .navRow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; margin-top: 12px; }
+    .navRow button { height: 40px; border-radius: 10px; border: 1px solid #ddd; background: #fff; }
+    .navRow button:disabled { opacity: 0.4; }
+    .count { color: #666; font-weight: 700; }
+    .list { margin-top: 14px; }
+    .listTitle { font-weight: 800; margin-bottom: 8px; }
+    .listItem { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 10px; border: 1px solid #eee; background: #fff; margin-bottom: 8px; }
+    .listItem.active { border-color: #bbb; }
+    .restDay { padding: 12px; border: 1px dashed #ddd; border-radius: 12px; margin-top: 12px; }
+    .progress { margin-top: 10px; color: #333; }
+    .tiny { font-size: 12px; color: #777; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // ===== Daten: Uebungen + Links =====
+    const EXERCISES = {
+      Kniebeugen: { name: "Kniebeugen", link: "https://www.youtube.com/results?search_query=Kniebeugen+richtige+Ausfuehrung" },
+      Liegestuetze: { name: "Liegestuetze", link: "https://www.youtube.com/results?search_query=Liegestuetze+richtige+Ausfuehrung" },
+      Plank: { name: "Plank (Unterarmstuetz)", link: "https://www.youtube.com/results?search_query=Plank+Unterarmstuetz+Technik" },
+      Ausfallschritte: { name: "Ausfallschritte", link: "https://www.youtube.com/results?search_query=Ausfallschritte+richtige+Ausfuehrung" },
+      MountainClimbers: { name: "Mountain Climbers", link: "https://www.youtube.com/results?search_query=Mountain+Climbers+Technik" },
+      BicycleCrunch: { name: "Bicycle Crunch", link: "https://www.youtube.com/results?search_query=Bicycle+Crunch+Ausfuehrung" },
+      Seitstuetz: { name: "Seitstuetz", link: "https://www.youtube.com/results?search_query=Seitstuetz+Technik" },
+      Burpees: { name: "Burpees", link: "https://www.youtube.com/results?search_query=Burpees+richtige+Ausfuehrung" }
+    };
+
+    const DAY_PATTERNS = {
+      A: ["Kniebeugen", "Liegestuetze", "Plank", "Ausfallschritte", "Seitstuetz"],
+      B: ["MountainClimbers", "BicycleCrunch", "Plank", "Kniebeugen"],
+      C: ["Burpees", "Seitstuetz", "BicycleCrunch", "Ausfallschritte"],
+      Pause: []
+    };
+
+    const ROTATION = ["A", "B", "C", "Pause", "A", "B", "Pause"];
+
+    // ===== Hilfsfunktionen =====
+    function formatDate(d) {
+      return d.getDate() + ". " + d.toLocaleString("de-CH", { month: "long" }) + " " + d.getFullYear();
+    }
+    function dayKeyFromDate(d) {
+      return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+    }
+    function getPlanForDate(dateObj) {
+      const day = dateObj.getDate();
+      const pattern = ROTATION[(day - 1) % ROTATION.length];
+      return { pattern, exercises: DAY_PATTERNS[pattern] };
+    }
+
+    // ===== Lokales Speichern =====
+    const STORAGE_KEY = "trainingProgress_simple_v1";
+    function loadProgress() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+      catch { return {}; }
+    }
+    function saveProgress(p) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+    }
+
+    // ===== State =====
+    let state = {
+      date: new Date(),
+      index: 0,
+      progress: loadProgress()
+    };
+
+    function ensureDay(dayKey, exercises) {
+      if (!state.progress[dayKey]) {
+        state.progress[dayKey] = { done: {}, finished: false };
+        exercises.forEach(id => state.progress[dayKey].done[id] = false);
+        saveProgress(state.progress);
+      } else {
+        exercises.forEach(id => {
+          if (!(id in state.progress[dayKey].done)) state.progress[dayKey].done[id] = false;
+        });
+      }
+    }
+
+    function setDate(delta) {
+      const d = new Date(state.date);
+      d.setDate(d.getDate() + delta);
+      state.date = d;
+      state.index = 0;
+      render();
+    }
+
+    function toggleDone(dayKey, exId) {
+      state.progress[dayKey].done[exId] = !state.progress[dayKey].done[exId];
+      state.progress[dayKey].finished = Object.values(state.progress[dayKey].done).every(Boolean);
+      saveProgress(state.progress);
+      render();
+    }
+
+    // ===== Render =====
+    function render() {
+      const app = document.getElementById("app");
+      const plan = getPlanForDate(state.date);
+      const dayKey = dayKeyFromDate(state.date);
+
+      ensureDay(dayKey, plan.exercises);
+
+      const exIds = plan.exercises;
+      const currentExId = exIds[state.index];
+      const currentEx = currentExId ? EXERCISES[currentExId] : null;
+      const finished = state.progress[dayKey].finished;
+
+      app.innerHTML = `
+        <div class="card">
+          <div class="topRow">
+            <button id="prevDay">◀</button>
+            <div>
+              <div class="date">${formatDate(state.date)}</div>
+              <div class="subtitle">Tag: ${plan.pattern}${plan.pattern === "Pause" ? " (Erholung)" : ""}</div>
+            </div>
+            <button id="nextDay">▶</button>
+          </div>
+
+          ${plan.pattern === "Pause" ? `
+            <div class="restDay">
+              <p><b>Aktive Erholung</b>: 10 Minuten Spaziergang oder leichtes Dehnen.</p>
+              <p>Optional: 2x 30 Sek Seitstuetz pro Seite.</p>
+            </div>
+          ` : `
+            <div class="progress">Status: ${finished ? "Tag abgeschlossen ✅" : "in Arbeit"}</div>
+
+            <div class="exercise">
+              <div class="exHeader">
+                <div class="exTitle">${currentEx ? currentEx.name : "Fertig!"}</div>
+                ${currentEx ? `<a class="exLink" href="${currentEx.link}" target="_blank" rel="noreferrer">Anleitung oeffnen</a>` : ""}
+              </div>
+
+              ${currentEx ? `
+                <label class="done">
+                  <input type="checkbox" id="doneBox" ${state.progress[dayKey].done[currentExId] ? "checked" : ""}>
+                  erledigt
+                </label>
+              ` : `<p>Super! Heute ist alles erledigt.</p>`}
+            </div>
+
+            <div class="navRow">
+              <button id="prevEx" ${state.index === 0 ? "disabled" : ""}>Zurueck</button>
+              <div class="count">${Math.min(state.index+1, exIds.length)}/${exIds.length}</div>
+              <button id="nextEx" ${state.index >= exIds.length-1 ? "disabled" : ""}>Naechste</button>
+            </div>
+
+            <div class="list">
+              <div class="listTitle">Alle Uebungen heute</div>
+              ${exIds.map((id,i) => `
+                <button class="listItem ${i===state.index ? "active" : ""}" data-i="${i}">
+                  <span>${EXERCISES[id].name}</span>
+                  <span>${state.progress[dayKey].done[id] ? "✅" : ""}</span>
+                </button>
+              `).join("")}
+            </div>
+          `}
+
+          <div class="tiny">
+            Hinweis: Fortschritt wird lokal im Browser gespeichert. Auf iPhone/iPad bleibt er erhalten, solange du Safari-Daten nicht loeschst.
+          </div>
+        </div>
+      `;
+
+      document.getElementById("prevDay").onclick = () => setDate(-1);
+      document.getElementById("nextDay").onclick = () => setDate(1);
+
+      if (plan.pattern !== "Pause") {
+        const prevEx = document.getElementById("prevEx");
+        const nextEx = document.getElementById("nextEx");
+        if (prevEx) prevEx.onclick = () => { state.index = Math.max(0, state.index-1); render(); };
+        if (nextEx) nextEx.onclick = () => { state.index = Math.min(exIds.length-1, state.index+1); render(); };
+
+        const doneBox = document.getElementById("doneBox");
+        if (doneBox && currentExId) doneBox.onchange = () => toggleDone(dayKey, currentExId);
+
+        document.querySelectorAll(".listItem").forEach(btn => {
+          btn.onclick = () => { state.index = Number(btn.dataset.i); render(); };
+        });
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>
