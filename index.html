@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Trainingsplan März</title>
+
 <meta name="theme-color" content="#0ea5e9">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -16,26 +17,31 @@
   --accent:#0ea5e9;
   --accent2:#22c55e;
 }
-
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,Segoe UI,Roboto;
-  background:linear-gradient(180deg,#fbfcff,#f4f6fb);
+  background:
+    radial-gradient(1100px 700px at 10% 5%, rgba(14,165,233,.16), transparent 60%),
+    radial-gradient(900px 700px at 90% 10%, rgba(34,197,94,.14), transparent 60%),
+    linear-gradient(180deg,#fbfcff,#f4f6fb);
   color:var(--text);
-  padding:16px;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
 }
-
 .container{max-width:760px;margin:0 auto;}
 h1{margin:0 0 6px}
-.date{color:var(--muted);font-size:14px;margin-bottom:14px;font-weight:700;}
+.date{color:var(--muted);font-size:14px;margin-bottom:14px;font-weight:800;}
+
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.pill{
+  padding:6px 10px;border-radius:999px;border:1px solid var(--line);
+  background:rgba(255,255,255,.85);
+  font-size:12px;font-weight:900;color:var(--muted);
+}
 
 .progressWrap{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
 .progress{height:10px;background:rgba(15,23,42,.10);border-radius:999px;overflow:hidden;flex:1;}
 .progress div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.25s;}
 .pct{width:52px;text-align:right;color:var(--muted);font-size:12px;font-weight:900;}
-
-.meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
-.pill{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:900;color:var(--muted);}
 
 .task{
   background:#fff;
@@ -43,11 +49,11 @@ h1{margin:0 0 6px}
   border-radius:16px;
   margin-bottom:12px;
   border:1px solid var(--line);
+  box-shadow:0 10px 24px rgba(2,6,23,.08);
 }
-
 .task-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
-.task-name{font-weight:1000;font-size:16px;}
-.task-sub{margin-top:6px;color:var(--muted);font-size:13px;font-weight:800;}
+.task-name{font-weight:1000;font-size:16px;line-height:1.2;}
+.task-sub{margin-top:6px;color:var(--muted);font-size:13px;font-weight:800;line-height:1.35;}
 
 .video-btn{
   text-decoration:none;
@@ -58,54 +64,148 @@ h1{margin:0 0 6px}
   background:#fff;
   color:var(--text);
   font-weight:900;
+  white-space:nowrap;
 }
+.video-btn:active{transform:translateY(1px)}
 
-.checkbox{
+.task-bottom{
   margin-top:12px;
   display:flex;
   justify-content:space-between;
   align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.checkbox{
+  display:flex;
+  align-items:center;
+  gap:10px;
   font-size:14px;
   font-weight:900;
 }
+.checkbox input{width:20px;height:20px;accent-color:var(--accent2);}
 
-.section{
-  margin-top:24px;
-  padding:16px;
-  border-radius:16px;
+.timer{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:8px 10px;
+  background:rgba(2,6,23,.02);
+}
+.timerTime{
+  font-variant-numeric:tabular-nums;
+  font-weight:1000;
+  min-width:54px;
+}
+.tbtn{
   border:1px solid var(--line);
   background:#fff;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:6px;
-  margin-bottom:16px;
-}
-
-.dayCell{
-  border:1px solid var(--line);
   border-radius:10px;
-  padding:6px;
-  font-size:12px;
-  text-align:center;
+  padding:6px 10px;
+  font-weight:900;
   cursor:pointer;
 }
+.tbtn.primary{
+  border:none;
+  color:#fff;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+}
+.tbtn:active{transform:translateY(1px)}
 
-canvas{width:100%;height:220px;}
+.controls{margin-top:14px;display:flex;justify-content:space-between;gap:10px;}
+button{
+  padding:10px 14px;border-radius:12px;border:1px solid var(--line);
+  background:#fff;font-weight:900;cursor:pointer;
+}
+button:active{transform:translateY(1px)}
+.smallbtn{border:none;background:transparent;color:var(--muted);font-weight:900;cursor:pointer;padding:10px 0;}
 
-table{
+.note{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.35;}
+
+.section{
+  margin-top:18px;
+  padding:14px;
+  border-radius:16px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.85);
+  box-shadow:0 10px 24px rgba(2,6,23,.06);
+}
+.sectionHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+.sectionTitle{
+  margin:0;
+  font-size:13px;
+  font-weight:1000;
+  color:var(--muted);
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(7, 1fr);
+  gap:8px;
+}
+.dayCell{
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:14px;
+  padding:10px 8px;
+  cursor:pointer;
+  min-height:58px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+.dayCell:active{transform:translateY(1px)}
+.dayTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+.dayNum{font-weight:1000;font-size:13px;}
+.badge{font-size:11px;font-weight:1000;color:var(--muted);}
+.dayBar{
+  height:8px;border-radius:999px;background:rgba(15,23,42,.08);overflow:hidden;
+}
+.dayBar > div{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+}
+.dayCell.active{outline:2px solid rgba(14,165,233,.35);}
+
+.chartWrap{
+  margin-top:12px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  padding:10px;
+}
+canvas{width:100%;height:220px;display:block}
+
+.table{
   width:100%;
   border-collapse:collapse;
-  margin-top:16px;
+  margin-top:12px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:16px;
+  overflow:hidden;
 }
-th,td{
+.table th,.table td{
+  padding:10px 12px;
   border-bottom:1px solid rgba(15,23,42,.08);
-  padding:8px;
+  text-align:left;
   font-size:13px;
 }
-th{color:var(--muted);text-align:left;}
+.table th{color:var(--muted);font-weight:1000;background:rgba(2,6,23,.02)}
+.table tr:last-child td{border-bottom:none}
 </style>
 </head>
 
@@ -116,6 +216,7 @@ th{color:var(--muted);text-align:left;}
 <div class="date" id="dateText"></div>
 
 <div class="meta">
+  <span class="pill" id="dayChip"></span>
   <span class="pill" id="phaseChip"></span>
   <span class="pill" id="statusChip"></span>
 </div>
@@ -125,179 +226,576 @@ th{color:var(--muted);text-align:left;}
   <div class="pct" id="pctText">0%</div>
 </div>
 
-<div id="tasks"></div>
-
-<div style="display:flex;justify-content:space-between;margin-top:10px;">
-  <button onclick="changeDay(-1)">◀</button>
-  <button onclick="changeDay(1)">▶</button>
+<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+  <button class="smallbtn" id="resetDayBtn" type="button">Heute zuruecksetzen</button>
 </div>
 
+<div id="tasks"></div>
+
+<div class="controls">
+  <button type="button" onclick="changeDay(-1)">◀ Vorheriger Tag</button>
+  <button type="button" onclick="changeDay(1)">Naechster Tag ▶</button>
+</div>
+
+<div class="note">
+Woche 1 Aufbau · Woche 2 Steigerung · Woche 3 Entlastung · Woche 4 Peak.<br>
+Steigerung nur wenn vorher erledigt (pro Uebung). Zeit-Uebungen haben Countdown.
+</div>
+
+<!-- Monatsuebersicht -->
 <div class="section">
-  <h3>Monatsübersicht</h3>
+  <div class="sectionHead">
+    <h2 class="sectionTitle" id="monthTitle">Monatsuebersicht</h2>
+    <button class="smallbtn" id="jumpTodayBtn" type="button">Heute</button>
+  </div>
+
   <div class="grid" id="monthGrid"></div>
-  <canvas id="chart" width="900" height="260"></canvas>
-  <table>
+
+  <div class="chartWrap">
+    <canvas id="monthChart" width="900" height="260"></canvas>
+  </div>
+
+  <table class="table" id="exerciseTable">
     <thead>
-      <tr><th>Übung</th><th>Erledigt</th><th>Geplant</th></tr>
+      <tr>
+        <th>Uebung</th>
+        <th>Erledigt</th>
+        <th>Geplant</th>
+      </tr>
     </thead>
-    <tbody id="exerciseTable"></tbody>
+    <tbody></tbody>
   </table>
 </div>
 
 </div>
 
 <script>
+/* -------------------- Daten -------------------- */
 const EXERCISES={
-  Kniebeugen:{name:"Kniebeugen"},
-  Liegestuetze:{name:"Liegestütze"},
-  Plank:{name:"Plank"},
-  Ausfallschritte:{name:"Ausfallschritte"},
-  MountainClimbers:{name:"Mountain Climbers"},
-  BicycleCrunch:{name:"Bicycle Crunch"},
-  Seitstuetz:{name:"Seitstütz"},
-  Burpees:{name:"Burpees"}
+  Kniebeugen:{name:"Kniebeugen",video:"https://www.youtube.com/results?search_query=Kniebeugen+richtige+Ausfuehrung"},
+  Liegestuetze:{name:"Liegestuetze",video:"https://www.youtube.com/results?search_query=Liegestuetze+richtige+Ausfuehrung"},
+  Plank:{name:"Plank (Unterarmstuetz)",video:"https://www.youtube.com/results?search_query=Plank+Unterarmstuetz+Technik"},
+  Ausfallschritte:{name:"Ausfallschritte",video:"https://www.youtube.com/results?search_query=Ausfallschritte+richtige+Ausfuehrung"},
+  MountainClimbers:{name:"Mountain Climbers",video:"https://www.youtube.com/results?search_query=Mountain+Climbers+Technik"},
+  BicycleCrunch:{name:"Bicycle Crunch",video:"https://www.youtube.com/results?search_query=Bicycle+Crunch+Technik"},
+  Seitstuetz:{name:"Seitstuetz",video:"https://www.youtube.com/results?search_query=Seitstuetz+Technik"},
+  Burpees:{name:"Burpees",video:"https://www.youtube.com/results?search_query=Burpees+richtige+Ausfuehrung"}
 };
 
+// 4 Uebungen pro Trainingstag
 const DAY_PATTERNS={
   A:["Kniebeugen","Liegestuetze","Plank","Ausfallschritte"],
   B:["MountainClimbers","BicycleCrunch","Plank","Kniebeugen"],
   C:["Burpees","Seitstuetz","BicycleCrunch","Ausfallschritte"],
   Pause:[]
 };
-
 const ROTATION=["A","B","C","Pause","A","B","Pause"];
-const STORAGE_KEY="trainingsplan_full_month";
 
-let state={date:new Date(),progress:JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")};
+// Reps vs Time + sinnvolle Steigerung
+const PROGRESSION={
+  Kniebeugen:{mode:"reps", base:15, step:3, cap:40, unit:"Wdh", round:1},
+  Liegestuetze:{mode:"reps", base:10, step:2, cap:25, unit:"Wdh", round:1},
+  Ausfallschritte:{mode:"reps", base:8,  step:1, cap:15, unit:"je Seite", round:1},
+  BicycleCrunch:{mode:"reps", base:16, step:2, cap:40, unit:"Wdh", round:1},
+  Burpees:{mode:"reps", base:6,  step:1, cap:12, unit:"Wdh", round:1},
 
-function dayKey(d){return d.toISOString().split("T")[0];}
-function patternForDate(d){return ROTATION[(d.getDate()-1)%ROTATION.length];}
-function weekPhase(d){
+  Plank:{mode:"time", base:20, step:5, cap:60, unit:"Sek", round:5},
+  Seitstuetz:{mode:"time", base:15, step:5, cap:45, unit:"Sek je Seite", round:5},
+  MountainClimbers:{mode:"time", base:20, step:5, cap:60, unit:"Sek", round:5}
+};
+
+const STORAGE_KEY="trainingsplan_month_timer_v1";
+
+/* -------------------- State -------------------- */
+let state={
+  date:new Date(),
+  progress:loadProgress(),
+  timers:{} // key: `${dayKey}|${exId}` -> {remaining:number, running:boolean, intervalId:number|null, base:number}
+};
+
+function loadProgress(){
+  try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{};}
+  catch{return {};}
+}
+function saveProgress(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress)); }
+
+function dayKey(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function formatDate(d){
+  return d.getDate()+". "+d.toLocaleString("de-CH",{month:"long"})+" "+d.getFullYear();
+}
+function patternForDate(d){ return ROTATION[(d.getDate()-1)%ROTATION.length]; }
+function weekInfo(d){
   const day=d.getDate();
-  if(day<=7) return "Woche 1 Aufbau";
-  if(day<=14) return "Woche 2 Steigerung";
-  if(day<=21) return "Woche 3 Entlastung";
-  return "Woche 4 Peak";
+  if(day<=7)  return {label:"Woche 1 Aufbau",factor:1.00};
+  if(day<=14) return {label:"Woche 2 Steigerung",factor:1.12};
+  if(day<=21) return {label:"Woche 3 Entlastung",factor:0.90};
+  return {label:"Woche 4 Peak",factor:1.18};
+}
+function roundTo(value, step){
+  if(step<=1) return Math.round(value);
+  return Math.round(value/step)*step;
 }
 
-function changeDay(o){state.date.setDate(state.date.getDate()+o);render();}
+/* Intelligente Anpassung:
+   Steigerung pro Uebung nur nach erfolgreich abgehakten frueheren Vorkommen */
+function completedBefore(exId, dateObj){
+  const year=dateObj.getFullYear();
+  const month=dateObj.getMonth();
+  const targetDay=dateObj.getDate();
+  let count=0;
+  for(let d=1; d<targetDay; d++){
+    const tmp=new Date(year,month,d);
+    const p=patternForDate(tmp);
+    if(p==="Pause") continue;
+    if(!DAY_PATTERNS[p].includes(exId)) continue;
+    const k=dayKey(tmp);
+    if(state.progress[k] && state.progress[k][exId]===true) count++;
+  }
+  return count;
+}
 
-function render(){
-  const key=dayKey(state.date);
-  const pattern=patternForDate(state.date);
-  document.getElementById("dateText").textContent=state.date.toLocaleDateString("de-CH");
-  document.getElementById("phaseChip").textContent=weekPhase(state.date);
+function prescription(exId, dateObj){
+  const cfg=PROGRESSION[exId];
+  if(!cfg) return {text:"", value:0, mode:"reps"};
+  const phase=weekInfo(dateObj);
+  const done=completedBefore(exId, dateObj);
+
+  let val = cfg.base + (done * cfg.step);
+  val = val * phase.factor;
+  val = roundTo(val, cfg.round);
+  val = Math.max(cfg.base, Math.min(cfg.cap, val));
+
+  const text = val + " " + cfg.unit;
+  return {text, value:val, mode:cfg.mode};
+}
+
+/* -------------------- Timer Logik (nur fuer time-Uebungen) -------------------- */
+function timerKey(dayKeyStr, exId){ return dayKeyStr + "|" + exId; }
+
+function clearAllTimers(){
+  Object.values(state.timers).forEach(t=>{
+    if(t.intervalId) clearInterval(t.intervalId);
+  });
+  state.timers = {};
+}
+
+function formatMMSS(seconds){
+  const s = Math.max(0, Math.round(seconds));
+  const mm = String(Math.floor(s/60)).padStart(2,"0");
+  const ss = String(s%60).padStart(2,"0");
+  return mm + ":" + ss;
+}
+
+function ensureTimer(dayKeyStr, exId, baseSeconds){
+  const k = timerKey(dayKeyStr, exId);
+  if(!state.timers[k]){
+    state.timers[k] = {remaining: baseSeconds, running:false, intervalId:null, base: baseSeconds};
+  } else {
+    // Wenn Basis sich aendert (Steigerung), Timer-Basis aktualisieren, aber nur resetten, wenn nicht am Laufen
+    const t = state.timers[k];
+    t.base = baseSeconds;
+    if(!t.running && (t.remaining > baseSeconds || t.remaining <= 0)) t.remaining = baseSeconds;
+  }
+  return state.timers[k];
+}
+
+function startTimer(dayKeyStr, exId){
+  const cfg = PROGRESSION[exId];
+  if(!cfg || cfg.mode!=="time") return;
+
+  const p = prescription(exId, state.date);
+  const t = ensureTimer(dayKeyStr, exId, p.value);
+
+  if(t.running) return;
+  t.running = true;
+
+  t.intervalId = setInterval(()=>{
+    t.remaining -= 1;
+    if(t.remaining <= 0){
+      t.remaining = 0;
+      stopTimer(dayKeyStr, exId);
+    }
+    // nur Timer UI aktualisieren (ohne komplettes Render)
+    const el = document.querySelector(`[data-timer="${timerKey(dayKeyStr, exId)}"] .timerTime`);
+    if(el) el.textContent = formatMMSS(t.remaining);
+
+    const btn = document.querySelector(`[data-timer="${timerKey(dayKeyStr, exId)}"] .tbtn.primary`);
+    if(btn) btn.textContent = t.running ? "Pause" : "Start";
+  }, 1000);
+
+  updateTimerRow(dayKeyStr, exId);
+}
+
+function stopTimer(dayKeyStr, exId){
+  const k = timerKey(dayKeyStr, exId);
+  const t = state.timers[k];
+  if(!t) return;
+  if(t.intervalId) clearInterval(t.intervalId);
+  t.intervalId = null;
+  t.running = false;
+  updateTimerRow(dayKeyStr, exId);
+}
+
+function resetTimer(dayKeyStr, exId){
+  const k = timerKey(dayKeyStr, exId);
+  const t = state.timers[k];
+  if(!t) return;
+  if(t.intervalId) clearInterval(t.intervalId);
+  t.intervalId = null;
+  t.running = false;
+  t.remaining = t.base;
+  updateTimerRow(dayKeyStr, exId);
+}
+
+function toggleTimer(dayKeyStr, exId){
+  const k = timerKey(dayKeyStr, exId);
+  const t = state.timers[k];
+  if(!t || !t.running) startTimer(dayKeyStr, exId);
+  else stopTimer(dayKeyStr, exId);
+}
+
+function updateTimerRow(dayKeyStr, exId){
+  const k = timerKey(dayKeyStr, exId);
+  const wrap = document.querySelector(`[data-timer="${k}"]`);
+  if(!wrap) return;
+  const t = state.timers[k];
+  wrap.querySelector(".timerTime").textContent = formatMMSS(t.remaining);
+  wrap.querySelector(".tbtn.primary").textContent = t.running ? "Pause" : "Start";
+}
+
+/* -------------------- Render Tagesplan -------------------- */
+function ensureDayProgress(dayKeyStr, list){
+  if(!state.progress[dayKeyStr]) state.progress[dayKeyStr] = {};
+  list.forEach(id=>{
+    if(!(id in state.progress[dayKeyStr])) state.progress[dayKeyStr][id]=false;
+  });
+  saveProgress();
+}
+
+function computePct(dayKeyStr, list){
+  const done=list.filter(id=>state.progress[dayKeyStr] && state.progress[dayKeyStr][id]===true).length;
+  const pct=Math.round((done/list.length)*100);
+  return {done,total:list.length,pct};
+}
+
+function resetDay(){
+  const p = patternForDate(state.date);
+  if(p==="Pause") return;
+  const list = DAY_PATTERNS[p];
+  const k = dayKey(state.date);
+  state.progress[k] = {};
+  list.forEach(id=>state.progress[k][id]=false);
+  saveProgress();
+
+  // Timer fuer den Tag zuruecksetzen
+  list.forEach(id=>{
+    if(PROGRESSION[id]?.mode==="time"){
+      const tk = timerKey(k, id);
+      if(state.timers[tk]) resetTimer(k, id);
+    }
+  });
+
+  renderAll();
+}
+
+function changeDay(offset){
+  clearAllTimers(); // Timer nicht ueber Tage mitnehmen
+  state.date.setDate(state.date.getDate()+offset);
+  renderAll();
+}
+
+function renderDay(){
+  const dayKeyStr = dayKey(state.date);
+  const pattern = patternForDate(state.date);
+  const week = weekInfo(state.date);
+
+  document.getElementById("dateText").textContent = formatDate(state.date);
+  document.getElementById("dayChip").textContent = "Tag " + pattern + (pattern==="Pause" ? " (Erholung)" : "");
+  document.getElementById("phaseChip").textContent = week.label;
 
   const tasks=document.getElementById("tasks");
   tasks.innerHTML="";
 
   if(pattern==="Pause"){
-    tasks.innerHTML="<div class='task'>Erholungstag</div>";
+    document.getElementById("progressBar").style.width="0%";
+    document.getElementById("pctText").textContent="0%";
+    document.getElementById("statusChip").textContent="Erholung";
+    document.getElementById("resetDayBtn").onclick=()=>{};
+    tasks.innerHTML=`
+      <div class="task">
+        <div class="task-name">Erholung</div>
+        <div class="task-sub">10 Minuten Spazieren oder leichtes Dehnen.</div>
+      </div>
+    `;
     return;
   }
 
-  if(!state.progress[key]) state.progress[key]={};
-  const list=DAY_PATTERNS[pattern];
-  let done=0;
+  const list = DAY_PATTERNS[pattern];
+  ensureDayProgress(dayKeyStr, list);
 
-  list.forEach(id=>{
-    if(state.progress[key][id]) done++;
+  const prog = computePct(dayKeyStr, list);
+  document.getElementById("progressBar").style.width = prog.pct + "%";
+  document.getElementById("pctText").textContent = prog.pct + "%";
+  document.getElementById("statusChip").textContent = (prog.pct===100) ? "geschafft" : "offen";
+  document.getElementById("resetDayBtn").onclick = resetDay;
+
+  list.forEach((exId, idx)=>{
+    const ex = EXERCISES[exId];
+    const checked = state.progress[dayKeyStr][exId]===true;
+
+    const presc = prescription(exId, state.date); // {text,value,mode}
+
     const div=document.createElement("div");
     div.className="task";
-    div.innerHTML=`
-      <div class="task-name">${EXERCISES[id].name}</div>
-      <div class="checkbox">
-        <label><input type="checkbox" ${state.progress[key][id]?"checked":""}> erledigt</label>
-      </div>
-    `;
-    div.querySelector("input").addEventListener("change",e=>{
-      state.progress[key][id]=e.target.checked;
-      localStorage.setItem(STORAGE_KEY,JSON.stringify(state.progress));
-      render();
-    });
-    tasks.appendChild(div);
-  });
 
-  const pct=Math.round((done/list.length)*100);
-  document.getElementById("progressBar").style.width=pct+"%";
-  document.getElementById("pctText").textContent=pct+"%";
-  document.getElementById("statusChip").textContent=pct===100?"geschafft":"offen";
-
-  renderMonth();
-}
-
-function renderMonth(){
-  const grid=document.getElementById("monthGrid");
-  grid.innerHTML="";
-  const y=state.date.getFullYear();
-  const m=state.date.getMonth();
-  const days=new Date(y,m+1,0).getDate();
-  const chartData=[];
-  const stats={};
-
-  Object.keys(EXERCISES).forEach(id=>{stats[id]={planned:0,done:0};});
-
-  for(let d=1; d<=days; d++){
-    const date=new Date(y,m,d);
-    const pattern=patternForDate(date);
-    const key=dayKey(date);
-    let pct=null;
-
-    if(pattern!=="Pause"){
-      const list=DAY_PATTERNS[pattern];
-      let done=0;
-      list.forEach(id=>{
-        stats[id].planned++;
-        if(state.progress[key] && state.progress[key][id]){
-          done++;
-          stats[id].done++;
-        }
-      });
-      pct=Math.round((done/list.length)*100);
+    let timerHtml = "";
+    if(presc.mode==="time"){
+      const t = ensureTimer(dayKeyStr, exId, presc.value);
+      timerHtml = `
+        <div class="timer" data-timer="${timerKey(dayKeyStr, exId)}">
+          <span class="timerTime">${formatMMSS(t.remaining)}</span>
+          <button class="tbtn primary" type="button">Start</button>
+          <button class="tbtn" type="button">Reset</button>
+        </div>
+      `;
     }
 
-    chartData.push(pct);
+    div.innerHTML=`
+      <div class="task-top">
+        <div style="min-width:0">
+          <div class="task-name">${idx+1}. ${ex.name}</div>
+          <div class="task-sub">Ziel heute: <b>${presc.text}</b> (${presc.mode==="time" ? "Zeit" : "Wiederholungen"}). Steigerung nur bei erledigt.</div>
+        </div>
+        <a class="video-btn" href="${ex.video}" target="_blank" rel="noreferrer">▶ Video</a>
+      </div>
+
+      <div class="task-bottom">
+        <label class="checkbox">
+          <input type="checkbox" ${checked?"checked":""} data-ex="${exId}">
+          erledigt
+        </label>
+        ${timerHtml}
+      </div>
+    `;
+
+    // Checkbox
+    div.querySelector('input[type="checkbox"][data-ex]').addEventListener("change",(e)=>{
+      state.progress[dayKeyStr][exId]=e.target.checked;
+      saveProgress();
+      renderAll(); // damit Plan, Monatsuebersicht, Diagramm und Tabelle aktualisieren
+    });
+
+    // Timer Buttons (nur time)
+    if(presc.mode==="time"){
+      const tWrap = div.querySelector(`[data-timer="${timerKey(dayKeyStr, exId)}"]`);
+      const startBtn = tWrap.querySelector(".tbtn.primary");
+      const resetBtn = tWrap.querySelectorAll(".tbtn")[1];
+
+      startBtn.addEventListener("click", ()=>toggleTimer(dayKeyStr, exId));
+      resetBtn.addEventListener("click", ()=>resetTimer(dayKeyStr, exId));
+
+      // Initial correct label
+      updateTimerRow(dayKeyStr, exId);
+    }
+
+    tasks.appendChild(div);
+  });
+}
+
+/* -------------------- Monatsuebersicht + Diagramm + Statistik -------------------- */
+function daysInMonth(year, monthIndex){
+  return new Date(year, monthIndex+1, 0).getDate();
+}
+
+function computePctForDate(d){
+  const p=patternForDate(d);
+  if(p==="Pause") return null;
+  const list=DAY_PATTERNS[p];
+  const k=dayKey(d);
+  if(!state.progress[k]) return {done:0,total:list.length,pct:0};
+  const done=list.filter(id=>state.progress[k][id]===true).length;
+  return {done,total:list.length,pct:Math.round((done/list.length)*100)};
+}
+
+function renderMonthGrid(){
+  const grid=document.getElementById("monthGrid");
+  grid.innerHTML="";
+
+  const y=state.date.getFullYear();
+  const m=state.date.getMonth();
+  const total=daysInMonth(y,m);
+
+  const monthName = state.date.toLocaleString("de-CH",{month:"long"});
+  document.getElementById("monthTitle").textContent = "Monatsuebersicht · " + monthName + " " + y;
+
+  for(let d=1; d<=total; d++){
+    const dateObj=new Date(y,m,d);
+    const pctObj=computePctForDate(dateObj);
+
     const cell=document.createElement("div");
-    cell.className="dayCell";
-    cell.textContent=d+(pct!==null?" "+pct+"%":" P");
-    cell.onclick=()=>{state.date=date;render();};
+    cell.className="dayCell"+(d===state.date.getDate() ? " active" : "");
+    const badgeText = (pctObj===null) ? "Pause" : (pctObj.pct + "%");
+
+    cell.innerHTML=`
+      <div class="dayTop">
+        <div class="dayNum">${d}</div>
+        <div class="badge">${badgeText}</div>
+      </div>
+      <div class="dayBar"><div style="width:${pctObj===null ? 0 : pctObj.pct}%;"></div></div>
+    `;
+
+    cell.addEventListener("click", ()=>{
+      clearAllTimers();
+      state.date = dateObj;
+      renderAll();
+    });
+
     grid.appendChild(cell);
   }
 
-  drawChart(chartData);
-  const tbody=document.getElementById("exerciseTable");
-  tbody.innerHTML="";
-  Object.keys(stats).forEach(id=>{
-    if(stats[id].planned>0){
-      const tr=document.createElement("tr");
-      tr.innerHTML=`<td>${EXERCISES[id].name}</td><td>${stats[id].done}</td><td>${stats[id].planned}</td>`;
-      tbody.appendChild(tr);
-    }
-  });
+  document.getElementById("jumpTodayBtn").onclick=()=>{
+    clearAllTimers();
+    state.date=new Date();
+    renderAll();
+  };
 }
 
-function drawChart(data){
-  const canvas=document.getElementById("chart");
+function drawLineChart(canvas, data){
   const ctx=canvas.getContext("2d");
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const step=canvas.width/(data.length-1);
+  const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+
+  const padL=44, padR=14, padT=16, padB=26;
+
+  ctx.fillStyle="#ffffff";
+  ctx.fillRect(0,0,w,h);
+
+  ctx.strokeStyle="rgba(15,23,42,.20)";
+  ctx.lineWidth=1;
   ctx.beginPath();
-  ctx.strokeStyle="#0ea5e9";
-  ctx.lineWidth=3;
-  data.forEach((v,i)=>{
-    if(v===null) return;
-    const x=i*step;
-    const y=canvas.height - (v/100)*canvas.height;
-    if(i===0) ctx.moveTo(x,y);
-    else ctx.lineTo(x,y);
-  });
+  ctx.moveTo(padL,padT);
+  ctx.lineTo(padL,h-padB);
+  ctx.lineTo(w-padR,h-padB);
   ctx.stroke();
+
+  ctx.fillStyle="rgba(15,23,42,.55)";
+  ctx.font="12px -apple-system, BlinkMacSystemFont, system-ui";
+  [0,50,100].forEach(v=>{
+    const y = padT + (1 - v/100) * (h - padT - padB);
+    ctx.strokeStyle="rgba(15,23,42,.08)";
+    ctx.beginPath();
+    ctx.moveTo(padL,y);
+    ctx.lineTo(w-padR,y);
+    ctx.stroke();
+    ctx.fillText(String(v), 10, y+4);
+  });
+
+  const n=data.length;
+  if(n===0) return;
+
+  const xStep=(w-padL-padR)/Math.max(1,(n-1));
+  const yScale=(h-padT-padB);
+
+  ctx.strokeStyle="rgba(14,165,233,.9)";
+  ctx.lineWidth=3;
+  ctx.beginPath();
+
+  let started=false;
+  for(let i=0;i<n;i++){
+    const v=data[i];
+    if(v===null) continue;
+    const x=padL+i*xStep;
+    const y=padT+(1-v/100)*yScale;
+    if(!started){ ctx.moveTo(x,y); started=true; }
+    else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle="rgba(34,197,94,.95)";
+  for(let i=0;i<n;i++){
+    const v=data[i];
+    if(v===null) continue;
+    const x=padL+i*xStep;
+    const y=padT+(1-v/100)*yScale;
+    ctx.beginPath();
+    ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle="rgba(15,23,42,.55)";
+  for(let i=0;i<n;i++){
+    const day=i+1;
+    if(day===1 || day===n || day%5===0){
+      const x=padL+i*xStep;
+      ctx.fillText(String(day), x-6, h-8);
+    }
+  }
+
+  ctx.fillStyle="rgba(15,23,42,.70)";
+  ctx.font="13px -apple-system, BlinkMacSystemFont, system-ui";
+  ctx.fillText("Tagesfortschritt im Monat (in %)", padL, 14);
 }
 
-render();
+function renderMonthChart(){
+  const y=state.date.getFullYear();
+  const m=state.date.getMonth();
+  const total=daysInMonth(y,m);
+
+  const values=[];
+  for(let d=1; d<=total; d++){
+    const pctObj=computePctForDate(new Date(y,m,d));
+    values.push(pctObj===null ? null : pctObj.pct);
+  }
+  drawLineChart(document.getElementById("monthChart"), values);
+}
+
+function renderExerciseTable(){
+  const tbody=document.querySelector("#exerciseTable tbody");
+  tbody.innerHTML="";
+
+  const y=state.date.getFullYear();
+  const m=state.date.getMonth();
+  const total=daysInMonth(y,m);
+
+  const planned={}, done={};
+  Object.keys(EXERCISES).forEach(id=>{planned[id]=0; done[id]=0;});
+
+  for(let d=1; d<=total; d++){
+    const dateObj=new Date(y,m,d);
+    const p=patternForDate(dateObj);
+    if(p==="Pause") continue;
+    const list=DAY_PATTERNS[p];
+    const k=dayKey(dateObj);
+
+    list.forEach(exId=>{
+      planned[exId] += 1;
+      if(state.progress[k] && state.progress[k][exId]===true) done[exId] += 1;
+    });
+  }
+
+  const ids=Object.keys(EXERCISES).sort((a,b)=>planned[b]-planned[a]);
+  ids.forEach(id=>{
+    if(planned[id]===0) return;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${EXERCISES[id].name}</td><td><b>${done[id]}</b></td><td>${planned[id]}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* -------------------- Gesamt-Render -------------------- */
+function renderAll(){
+  renderDay();
+  renderMonthGrid();
+  renderMonthChart();
+  renderExerciseTable();
+}
+
+renderAll();
 
 if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("./sw.js");
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
 }
 </script>
 
