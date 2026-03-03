@@ -22,48 +22,55 @@
   --radius:16px;
   --line:#e2e8f0;
 }
+
 *{box-sizing:border-box}
+
+html,body{height:100%}
 
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
   color:var(--text);
+
   background:
     radial-gradient(1200px 800px at 10% 10%, rgba(14,165,233,.18), transparent 60%),
     radial-gradient(900px 700px at 90% 20%, rgba(34,197,94,.18), transparent 55%),
-    radial-gradient(900px 700px at 50% 95%, rgba(99,102,241,.12), transparent 55%),
     linear-gradient(180deg,#f8fafc,#eef2f7);
-  min-height:100vh;
+
+  min-height:100svh;
+  overflow:auto;
+
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:env(safe-area-inset-bottom);
+  padding-left:env(safe-area-inset-left);
+  padding-right:env(safe-area-inset-right);
+
+  display:flex;
+}
+
+.shell{
+  width:100%;
+  min-height:100svh;
   display:flex;
   align-items:center;
   justify-content:center;
+  padding:20px;
 }
 
 .wrap{
   width:100%;
   max-width:560px;
-  padding:20px;
 }
 
 .header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:12px;
   margin-bottom:14px;
 }
 
-.title{
-  font-weight:950;
-  font-size:18px;
-}
-
-.date{
-  font-size:12px;
-  color:var(--muted);
-  font-weight:800;
-  margin-top:4px;
-}
+.title{font-weight:950;font-size:18px}
+.date{font-size:12px;color:var(--muted);font-weight:800;margin-top:4px}
 
 .card{
   background:rgba(255,255,255,.92);
@@ -77,9 +84,9 @@ body{
 .metaRow{
   display:flex;
   justify-content:space-between;
-  gap:10px;
   flex-wrap:wrap;
   margin-bottom:12px;
+  gap:8px;
 }
 
 .chip{
@@ -115,7 +122,7 @@ body{
 }
 
 .pct{
-  width:56px;
+  width:50px;
   text-align:right;
   font-size:12px;
   color:var(--muted);
@@ -133,21 +140,11 @@ body{
 .exerciseTop{
   display:flex;
   justify-content:space-between;
-  align-items:flex-start;
   gap:10px;
 }
 
-.exercise h2{
-  margin:0;
-  font-size:18px;
-  font-weight:950;
-}
-
-.exercise p{
-  margin:6px 0 0;
-  font-size:13px;
-  color:var(--muted);
-}
+.exercise h2{margin:0;font-size:18px;font-weight:950}
+.exercise p{margin:6px 0 0;font-size:13px;color:var(--muted)}
 
 .videoLink{
   text-decoration:none;
@@ -162,9 +159,8 @@ body{
 
 .checkRow{
   display:flex;
-  align-items:center;
   justify-content:space-between;
-  gap:12px;
+  align-items:center;
   margin-top:12px;
   flex-wrap:wrap;
 }
@@ -187,7 +183,6 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:12px;
   border:1px solid var(--line);
   border-radius:14px;
   padding:12px;
@@ -195,14 +190,11 @@ body{
   background:#fff;
 }
 
-.timer span{
-  font-size:26px;
-  font-weight:1000;
-}
+.timer span{font-size:26px;font-weight:1000}
 
 button{
   font:inherit;
-  padding:10px 14px;
+  padding:8px 12px;
   border-radius:12px;
   border:1px solid var(--line);
   background:#fff;
@@ -235,12 +227,9 @@ button.primary{
   width:100%;
   text-align:left;
   margin-top:8px;
-  border-radius:14px;
 }
 
-.active{
-  background:rgba(14,165,233,.08);
-}
+.active{background:rgba(14,165,233,.08)}
 
 .rest{
   border:1px dashed rgba(15,23,42,.20);
@@ -259,6 +248,7 @@ button.primary{
 </head>
 
 <body>
+<div class="shell">
 <div class="wrap">
 
 <div class="header">
@@ -286,9 +276,9 @@ button.primary{
 
   <div id="main"></div>
 
-  <div class="footer">
-    Du bleibst dran. Ein kleiner Schritt zählt.
-  </div>
+  <div class="footer">Du bleibst dran. Ein kleiner Schritt zählt.</div>
+</div>
+
 </div>
 </div>
 
@@ -312,8 +302,7 @@ const DAY_PATTERNS={
 };
 
 const ROTATION=["A","B","C","Pause","A","B","Pause"];
-
-const STORAGE_KEY="trainingsplan_maerz_centered_v1";
+const STORAGE_KEY="trainingsplan_centered_final";
 
 function loadProgress(){
   try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{};}
@@ -324,133 +313,76 @@ function saveProgress(p){localStorage.setItem(STORAGE_KEY,JSON.stringify(p));}
 let state={
   date:new Date(),
   index:0,
-  progress:loadProgress(),
-  timer:null,
-  seconds:30
+  progress:loadProgress()
 };
 
 function formatDate(d){
   return d.getDate()+". "+d.toLocaleString("de-CH",{month:"long"})+" "+d.getFullYear();
 }
 
-function getPlanForDate(dateObj){
-  const day=dateObj.getDate();
-  const pattern=ROTATION[(day-1)%ROTATION.length];
-  return {pattern,exercises:DAY_PATTERNS[pattern]};
-}
-
-function getWeekMode(dateObj){
-  const d=dateObj.getDate();
-  if(d<=7) return "Woche 1";
-  if(d<=14) return "Woche 2";
-  if(d<=21) return "Woche 3";
-  return "Woche 4";
-}
-
-function getWeekSeconds(weekMode){
-  if(weekMode==="Woche 1") return 30;
-  if(weekMode==="Woche 2") return 40;
-  if(weekMode==="Woche 3") return 20;
+function getWeekSeconds(day){
+  if(day<=7)return 30;
+  if(day<=14)return 40;
+  if(day<=21)return 20;
   return 45;
 }
 
 function dayKeyFromDate(d){
-  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-}
-
-function ensureDay(dayKey,exercises){
-  if(!state.progress[dayKey]){
-    state.progress[dayKey]={done:{},finished:false};
-    exercises.forEach(id=>state.progress[dayKey].done[id]=false);
-    saveProgress(state.progress);
-  }
-}
-
-function computePct(dayKey){
-  const done=state.progress[dayKey]?.done||{};
-  const vals=Object.values(done);
-  if(vals.length===0) return 0;
-  const c=vals.filter(Boolean).length;
-  return Math.round((c/vals.length)*100);
+  return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
 }
 
 function render(){
-  const plan=getPlanForDate(state.date);
+  const day=state.date.getDate();
+  const pattern=ROTATION[(day-1)%ROTATION.length];
   const dayKey=dayKeyFromDate(state.date);
-  const weekMode=getWeekMode(state.date);
 
   document.getElementById("dateText").textContent=formatDate(state.date);
-  document.getElementById("dayChip").textContent="Tag: "+plan.pattern+(plan.pattern==="Pause"?" (Erholung)":"");
-  document.getElementById("weekChip").textContent=getWeekSeconds(weekMode)+" Sek";
+  document.getElementById("dayChip").textContent="Tag: "+pattern;
+  document.getElementById("weekChip").textContent=getWeekSeconds(day)+" Sek";
 
-  ensureDay(dayKey,plan.exercises);
+  if(!state.progress[dayKey]) state.progress[dayKey]={};
 
-  const pct=computePct(dayKey);
-  document.getElementById("bar").style.width=pct+"%";
-  document.getElementById("pctText").textContent=pct+"%";
-
-  const main=document.getElementById("main");
-
-  if(plan.pattern==="Pause"){
-    main.innerHTML='<div class="rest"><strong>Erholung</strong><p>10 Minuten Spaziergang oder Dehnen.</p></div>';
+  if(pattern==="Pause"){
+    document.getElementById("main").innerHTML='<div class="rest"><strong>Erholung</strong><p>10 Minuten Spaziergang oder Dehnen.</p></div>';
     return;
   }
 
-  const list=plan.exercises;
-  const current=list[state.index];
-  const ex=EXERCISES[current];
+  const list=DAY_PATTERNS[pattern];
+  const ex=list[state.index];
+  const exData=EXERCISES[ex];
 
-  main.innerHTML=`
+  const doneCount=Object.values(state.progress[dayKey]).filter(Boolean).length;
+  const pct=Math.round((doneCount/list.length)*100);
+
+  document.getElementById("bar").style.width=pct+"%";
+  document.getElementById("pctText").textContent=pct+"%";
+  document.getElementById("statusChip").textContent=pct===100?"Status: geschafft":"Status: offen";
+
+  document.getElementById("main").innerHTML=`
     <div class="exercise">
       <div class="exerciseTop">
         <div>
-          <h2>${ex.name}</h2>
-          <p>${ex.hint}</p>
+          <h2>${exData.name}</h2>
+          <p>${exData.hint}</p>
         </div>
-        <a class="videoLink" href="${ex.video}" target="_blank">▶ Video</a>
+        <a class="videoLink" href="${exData.video}" target="_blank">▶ Video</a>
       </div>
       <div class="checkRow">
-        <label><input type="checkbox" id="doneBox" ${state.progress[dayKey].done[current]?"checked":""}> erledigt</label>
+        <label><input type="checkbox" id="doneBox" ${state.progress[dayKey][ex]?"checked":""}> erledigt</label>
         <div>${state.index+1}/${list.length}</div>
       </div>
     </div>
-    <div class="timer">
-      <span id="timerDisplay">${getWeekSeconds(weekMode)}s</span>
-      <div>
-        <button class="primary" id="startBtn">Start</button>
-        <button id="resetBtn">Reset</button>
-      </div>
-    </div>
-    <div class="navRow">
-      <button id="prevBtn">Zurück</button>
-      <div class="count">${state.index+1}/${list.length}</div>
-      <button id="nextBtn">Nächste</button>
-    </div>
-    <div id="list"></div>
   `;
 
   document.getElementById("doneBox").onchange=function(){
-    state.progress[dayKey].done[current]=this.checked;
+    state.progress[dayKey][ex]=this.checked;
     saveProgress(state.progress);
     render();
   };
-
-  document.getElementById("prevBtn").onclick=()=>{if(state.index>0){state.index--;render()}};
-  document.getElementById("nextBtn").onclick=()=>{if(state.index<list.length-1){state.index++;render()}};
-
-  const listDiv=document.getElementById("list");
-  listDiv.innerHTML="";
-  list.forEach((id,i)=>{
-    const btn=document.createElement("button");
-    btn.textContent=EXERCISES[id].name+(state.progress[dayKey].done[id]?" ✓":"");
-    if(i===state.index)btn.classList.add("active");
-    btn.onclick=()=>{state.index=i;render()};
-    listDiv.appendChild(btn);
-  });
 }
 
-document.getElementById("prevDay").onclick=()=>{state.date.setDate(state.date.getDate()-1);state.index=0;render()};
-document.getElementById("nextDay").onclick=()=>{state.date.setDate(state.date.getDate()+1);state.index=0;render()};
+document.getElementById("prevDay").onclick=()=>{state.date.setDate(state.date.getDate()-1);state.index=0;render();};
+document.getElementById("nextDay").onclick=()=>{state.date.setDate(state.date.getDate()+1);state.index=0;render();};
 
 render();
 
