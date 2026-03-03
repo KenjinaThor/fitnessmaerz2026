@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Trainingsplan März</title>
-
 <meta name="theme-color" content="#0ea5e9">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -21,94 +20,92 @@
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,Segoe UI,Roboto;
-  background:#f4f6fb;
+  background:linear-gradient(180deg,#fbfcff,#f4f6fb);
   color:var(--text);
-  padding:20px;
+  padding:16px;
 }
 
-.container{
-  max-width:600px;
-  margin:0 auto;
-}
+.container{max-width:760px;margin:0 auto;}
+h1{margin:0 0 6px}
+.date{color:var(--muted);font-size:14px;margin-bottom:14px;font-weight:700;}
 
-h1{
-  margin-bottom:6px;
-}
+.progressWrap{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.progress{height:10px;background:rgba(15,23,42,.10);border-radius:999px;overflow:hidden;flex:1;}
+.progress div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.25s;}
+.pct{width:52px;text-align:right;color:var(--muted);font-size:12px;font-weight:900;}
 
-.date{
-  color:var(--muted);
-  font-size:14px;
-  margin-bottom:16px;
-}
-
-.progress{
-  height:10px;
-  background:#e5e7eb;
-  border-radius:999px;
-  overflow:hidden;
-  margin-bottom:16px;
-}
-
-.progress div{
-  height:100%;
-  width:0%;
-  background:linear-gradient(90deg,var(--accent),var(--accent2));
-  transition:width .3s ease;
-}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.pill{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:900;color:var(--muted);}
 
 .task{
   background:#fff;
-  padding:16px;
+  padding:14px;
   border-radius:16px;
   margin-bottom:12px;
   border:1px solid var(--line);
 }
 
-.task-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-}
-
-.task-name{
-  font-weight:700;
-  font-size:16px;
-}
+.task-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.task-name{font-weight:1000;font-size:16px;}
+.task-sub{margin-top:6px;color:var(--muted);font-size:13px;font-weight:800;}
 
 .video-btn{
   text-decoration:none;
   font-size:13px;
   padding:8px 12px;
-  border-radius:10px;
+  border-radius:12px;
   border:1px solid var(--line);
   background:#fff;
   color:var(--text);
-  font-weight:600;
+  font-weight:900;
 }
 
 .checkbox{
   margin-top:12px;
   display:flex;
-  align-items:center;
-  gap:8px;
-  font-size:14px;
-  font-weight:600;
-}
-
-.controls{
-  margin-top:20px;
-  display:flex;
   justify-content:space-between;
+  align-items:center;
+  font-size:14px;
+  font-weight:900;
 }
 
-button{
-  padding:10px 14px;
-  border-radius:12px;
+.section{
+  margin-top:24px;
+  padding:16px;
+  border-radius:16px;
   border:1px solid var(--line);
   background:#fff;
-  font-weight:600;
 }
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+  margin-bottom:16px;
+}
+
+.dayCell{
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:6px;
+  font-size:12px;
+  text-align:center;
+  cursor:pointer;
+}
+
+canvas{width:100%;height:220px;}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
+}
+th,td{
+  border-bottom:1px solid rgba(15,23,42,.08);
+  padding:8px;
+  font-size:13px;
+}
+th{color:var(--muted);text-align:left;}
 </style>
 </head>
 
@@ -118,27 +115,47 @@ button{
 <h1>Trainingsplan März</h1>
 <div class="date" id="dateText"></div>
 
-<div class="progress"><div id="progressBar"></div></div>
+<div class="meta">
+  <span class="pill" id="phaseChip"></span>
+  <span class="pill" id="statusChip"></span>
+</div>
+
+<div class="progressWrap">
+  <div class="progress"><div id="progressBar"></div></div>
+  <div class="pct" id="pctText">0%</div>
+</div>
 
 <div id="tasks"></div>
 
-<div class="controls">
-  <button onclick="changeDay(-1)">◀ Vorheriger Tag</button>
-  <button onclick="changeDay(1)">Nächster Tag ▶</button>
+<div style="display:flex;justify-content:space-between;margin-top:10px;">
+  <button onclick="changeDay(-1)">◀</button>
+  <button onclick="changeDay(1)">▶</button>
+</div>
+
+<div class="section">
+  <h3>Monatsübersicht</h3>
+  <div class="grid" id="monthGrid"></div>
+  <canvas id="chart" width="900" height="260"></canvas>
+  <table>
+    <thead>
+      <tr><th>Übung</th><th>Erledigt</th><th>Geplant</th></tr>
+    </thead>
+    <tbody id="exerciseTable"></tbody>
+  </table>
 </div>
 
 </div>
 
 <script>
 const EXERCISES={
-  Kniebeugen:{name:"Kniebeugen",video:"https://www.youtube.com/results?search_query=Kniebeugen+richtige+Ausführung"},
-  Liegestuetze:{name:"Liegestütze",video:"https://www.youtube.com/results?search_query=Liegestütze+richtige+Ausführung"},
-  Plank:{name:"Plank",video:"https://www.youtube.com/results?search_query=Plank+Technik"},
-  Ausfallschritte:{name:"Ausfallschritte",video:"https://www.youtube.com/results?search_query=Ausfallschritte+Technik"},
-  MountainClimbers:{name:"Mountain Climbers",video:"https://www.youtube.com/results?search_query=Mountain+Climbers+Technik"},
-  BicycleCrunch:{name:"Bicycle Crunch",video:"https://www.youtube.com/results?search_query=Bicycle+Crunch+Technik"},
-  Seitstuetz:{name:"Seitstütz",video:"https://www.youtube.com/results?search_query=Seitstütz+Technik"},
-  Burpees:{name:"Burpees",video:"https://www.youtube.com/results?search_query=Burpees+Technik"}
+  Kniebeugen:{name:"Kniebeugen"},
+  Liegestuetze:{name:"Liegestütze"},
+  Plank:{name:"Plank"},
+  Ausfallschritte:{name:"Ausfallschritte"},
+  MountainClimbers:{name:"Mountain Climbers"},
+  BicycleCrunch:{name:"Bicycle Crunch"},
+  Seitstuetz:{name:"Seitstütz"},
+  Burpees:{name:"Burpees"}
 };
 
 const DAY_PATTERNS={
@@ -149,78 +166,132 @@ const DAY_PATTERNS={
 };
 
 const ROTATION=["A","B","C","Pause","A","B","Pause"];
-const STORAGE_KEY="trainingsplan_list_v2";
+const STORAGE_KEY="trainingsplan_full_month";
 
-let state={
-  date:new Date(),
-  progress:JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")
-};
+let state={date:new Date(),progress:JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")};
 
-function formatDate(d){
-  return d.getDate()+". "+d.toLocaleString("de-CH",{month:"long"})+" "+d.getFullYear();
+function dayKey(d){return d.toISOString().split("T")[0];}
+function patternForDate(d){return ROTATION[(d.getDate()-1)%ROTATION.length];}
+function weekPhase(d){
+  const day=d.getDate();
+  if(day<=7) return "Woche 1 Aufbau";
+  if(day<=14) return "Woche 2 Steigerung";
+  if(day<=21) return "Woche 3 Entlastung";
+  return "Woche 4 Peak";
 }
 
-function dayKey(d){
-  return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
-}
-
-function changeDay(offset){
-  state.date.setDate(state.date.getDate()+offset);
-  render();
-}
+function changeDay(o){state.date.setDate(state.date.getDate()+o);render();}
 
 function render(){
-  const day=state.date.getDate();
-  const pattern=ROTATION[(day-1)%ROTATION.length];
   const key=dayKey(state.date);
+  const pattern=patternForDate(state.date);
+  document.getElementById("dateText").textContent=state.date.toLocaleDateString("de-CH");
+  document.getElementById("phaseChip").textContent=weekPhase(state.date);
 
-  document.getElementById("dateText").textContent=formatDate(state.date);
-
-  const container=document.getElementById("tasks");
-  container.innerHTML="";
+  const tasks=document.getElementById("tasks");
+  tasks.innerHTML="";
 
   if(pattern==="Pause"){
-    container.innerHTML="<div class='task'>Erholungstag – 10 Minuten Bewegung.</div>";
-    document.getElementById("progressBar").style.width="0%";
+    tasks.innerHTML="<div class='task'>Erholungstag</div>";
     return;
   }
 
   if(!state.progress[key]) state.progress[key]={};
-
   const list=DAY_PATTERNS[pattern];
+  let done=0;
 
-  let doneCount=0;
-
-  list.forEach((id)=>{
-    if(state.progress[key][id]) doneCount++;
-
-    const ex=EXERCISES[id];
-
-    const task=document.createElement("div");
-    task.className="task";
-
-    task.innerHTML=`
-      <div class="task-top">
-        <div class="task-name">${ex.name}</div>
-        <a class="video-btn" href="${ex.video}" target="_blank">Video</a>
-      </div>
+  list.forEach(id=>{
+    if(state.progress[key][id]) done++;
+    const div=document.createElement("div");
+    div.className="task";
+    div.innerHTML=`
+      <div class="task-name">${EXERCISES[id].name}</div>
       <div class="checkbox">
-        <input type="checkbox" ${state.progress[key][id]?"checked":""}>
-        erledigt
+        <label><input type="checkbox" ${state.progress[key][id]?"checked":""}> erledigt</label>
       </div>
     `;
-
-    task.querySelector("input").addEventListener("change",(e)=>{
+    div.querySelector("input").addEventListener("change",e=>{
       state.progress[key][id]=e.target.checked;
       localStorage.setItem(STORAGE_KEY,JSON.stringify(state.progress));
       render();
     });
-
-    container.appendChild(task);
+    tasks.appendChild(div);
   });
 
-  const percent=Math.round((doneCount/list.length)*100);
-  document.getElementById("progressBar").style.width=percent+"%";
+  const pct=Math.round((done/list.length)*100);
+  document.getElementById("progressBar").style.width=pct+"%";
+  document.getElementById("pctText").textContent=pct+"%";
+  document.getElementById("statusChip").textContent=pct===100?"geschafft":"offen";
+
+  renderMonth();
+}
+
+function renderMonth(){
+  const grid=document.getElementById("monthGrid");
+  grid.innerHTML="";
+  const y=state.date.getFullYear();
+  const m=state.date.getMonth();
+  const days=new Date(y,m+1,0).getDate();
+  const chartData=[];
+  const stats={};
+
+  Object.keys(EXERCISES).forEach(id=>{stats[id]={planned:0,done:0};});
+
+  for(let d=1; d<=days; d++){
+    const date=new Date(y,m,d);
+    const pattern=patternForDate(date);
+    const key=dayKey(date);
+    let pct=null;
+
+    if(pattern!=="Pause"){
+      const list=DAY_PATTERNS[pattern];
+      let done=0;
+      list.forEach(id=>{
+        stats[id].planned++;
+        if(state.progress[key] && state.progress[key][id]){
+          done++;
+          stats[id].done++;
+        }
+      });
+      pct=Math.round((done/list.length)*100);
+    }
+
+    chartData.push(pct);
+    const cell=document.createElement("div");
+    cell.className="dayCell";
+    cell.textContent=d+(pct!==null?" "+pct+"%":" P");
+    cell.onclick=()=>{state.date=date;render();};
+    grid.appendChild(cell);
+  }
+
+  drawChart(chartData);
+  const tbody=document.getElementById("exerciseTable");
+  tbody.innerHTML="";
+  Object.keys(stats).forEach(id=>{
+    if(stats[id].planned>0){
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${EXERCISES[id].name}</td><td>${stats[id].done}</td><td>${stats[id].planned}</td>`;
+      tbody.appendChild(tr);
+    }
+  });
+}
+
+function drawChart(data){
+  const canvas=document.getElementById("chart");
+  const ctx=canvas.getContext("2d");
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const step=canvas.width/(data.length-1);
+  ctx.beginPath();
+  ctx.strokeStyle="#0ea5e9";
+  ctx.lineWidth=3;
+  data.forEach((v,i)=>{
+    if(v===null) return;
+    const x=i*step;
+    const y=canvas.height - (v/100)*canvas.height;
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
 }
 
 render();
