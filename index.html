@@ -6,293 +6,222 @@
 <title>Trainingsplan März</title>
 
 <meta name="theme-color" content="#0ea5e9">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon.svg">
 
 <style>
 :root{
-  --bg:#f2f3f7;
-  --card:rgba(255,255,255,.92);
   --text:#0f172a;
   --muted:#667085;
   --line:rgba(15,23,42,.10);
-  --shadow:0 18px 45px rgba(2,6,23,.12);
-  --radius:22px;
-  --radius2:18px;
   --accent:#0ea5e9;
   --accent2:#22c55e;
 }
-*{box-sizing:border-box}
+
 body{
   margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,Segoe UI,Roboto,Arial;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,Segoe UI,Roboto;
+  background:#f4f6fb;
   color:var(--text);
-  background:
-    radial-gradient(1100px 700px at 10% 5%, rgba(14,165,233,.16), transparent 60%),
-    radial-gradient(900px 700px at 90% 10%, rgba(34,197,94,.14), transparent 60%),
-    linear-gradient(180deg,#fbfcff,var(--bg));
-  padding-top:calc(14px + env(safe-area-inset-top));
-  padding-bottom:calc(18px + env(safe-area-inset-bottom));
+  padding:20px;
 }
-.app{
-  max-width:560px;
+
+.container{
+  max-width:600px;
   margin:0 auto;
-  padding:0 16px;
 }
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:12px;
+
+h1{
+  margin-bottom:6px;
 }
-.brand{
-  display:flex;
-  gap:12px;
-  align-items:center;
+
+.date{
+  color:var(--muted);
+  font-size:14px;
+  margin-bottom:16px;
 }
-.logo{
-  width:42px;height:42px;
-  border-radius:16px;
-  display:grid;place-items:center;
-  background:linear-gradient(135deg, rgba(14,165,233,.18), rgba(34,197,94,.14));
-  border:1px solid rgba(15,23,42,.08);
-}
-.brandTitle{font-weight:950;font-size:16px}
-.brandSub{font-size:12px;color:var(--muted);font-weight:700}
-.iconBtn{
-  width:42px;height:42px;
-  border-radius:14px;
-  border:1px solid var(--line);
-  background:#fff;
-  font-weight:900;
-}
-.hero{
-  margin-bottom:12px;
-  padding:14px;
-  border-radius:20px;
-  background:rgba(255,255,255,.8);
-  border:1px solid var(--line);
-}
-.heroDate{font-weight:950;font-size:15px}
-.pill{
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid var(--line);
-  background:#fff;
-  font-size:12px;
-  font-weight:850;
-  margin-top:6px;
-}
-.progressRow{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-top:10px;
-}
-.bar{
-  flex:1;height:10px;
-  background:rgba(15,23,42,.08);
+
+.progress{
+  height:10px;
+  background:#e5e7eb;
   border-radius:999px;
   overflow:hidden;
+  margin-bottom:16px;
 }
-.barFill{
-  height:100%;width:0%;
+
+.progress div{
+  height:100%;
+  width:0%;
   background:linear-gradient(90deg,var(--accent),var(--accent2));
+  transition:width .3s ease;
 }
-.pct{font-size:12px;font-weight:900;color:var(--muted)}
-.card{
-  background:var(--card);
-  border-radius:var(--radius);
-  border:1px solid var(--line);
-  box-shadow:var(--shadow);
-  padding:14px;
-}
-.exerciseCard{
-  border-radius:var(--radius2);
-  border:1px solid var(--line);
-  padding:14px;
+
+.task{
   background:#fff;
-}
-.exName{font-weight:1000;font-size:18px}
-.exHint{margin-top:6px;font-size:13px;color:var(--muted)}
-.videoBtn{
-  display:inline-block;
-  margin-top:8px;
-  padding:8px 12px;
-  border-radius:14px;
+  padding:16px;
+  border-radius:16px;
+  margin-bottom:12px;
   border:1px solid var(--line);
-  background:#fff;
-  font-weight:900;
+}
+
+.task-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.task-name{
+  font-weight:700;
+  font-size:16px;
+}
+
+.video-btn{
   text-decoration:none;
+  font-size:13px;
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:#fff;
   color:var(--text);
+  font-weight:600;
 }
-.checkRow{
+
+.checkbox{
   margin-top:12px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  gap:8px;
+  font-size:14px;
+  font-weight:600;
 }
-.checkRow label{font-weight:900;font-size:13px}
-.timer{
-  margin-top:12px;
+
+.controls{
+  margin-top:20px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
-  padding:12px;
-  border-radius:var(--radius2);
+}
+
+button{
+  padding:10px 14px;
+  border-radius:12px;
   border:1px solid var(--line);
   background:#fff;
-}
-.timer span{font-size:26px;font-weight:1000}
-.btn{
-  height:40px;
-  padding:0 12px;
-  border-radius:14px;
-  border:1px solid var(--line);
-  background:#fff;
-  font-weight:900;
-}
-.btnPrimary{
-  background:linear-gradient(90deg,var(--accent),var(--accent2));
-  color:#fff;
-  border:none;
-}
-.navEx{
-  margin-top:12px;
-  display:flex;
-  justify-content:space-between;
-}
-.footer{
-  margin-top:12px;
-  text-align:center;
-  font-size:12px;
-  color:var(--muted);
+  font-weight:600;
 }
 </style>
 </head>
 
 <body>
-<div class="app">
+<div class="container">
 
-<div class="topbar">
-  <div class="brand">
-    <div class="logo">💪</div>
-    <div>
-      <div class="brandTitle">Trainingsplan März</div>
-      <div class="brandSub">10–15 Minuten · Eigengewicht</div>
-    </div>
-  </div>
-  <div>
-    <button class="iconBtn" id="prevDay">◀</button>
-    <button class="iconBtn" id="nextDay">▶</button>
-  </div>
+<h1>Trainingsplan März</h1>
+<div class="date" id="dateText"></div>
+
+<div class="progress"><div id="progressBar"></div></div>
+
+<div id="tasks"></div>
+
+<div class="controls">
+  <button onclick="changeDay(-1)">◀ Vorheriger Tag</button>
+  <button onclick="changeDay(1)">Nächster Tag ▶</button>
 </div>
-
-<div class="hero">
-  <div class="heroDate" id="dateText"></div>
-  <div>
-    <span class="pill" id="dayChip"></span>
-    <span class="pill" id="weekChip"></span>
-    <span class="pill" id="statusChip"></span>
-  </div>
-  <div class="progressRow">
-    <div class="bar"><div class="barFill" id="barFill"></div></div>
-    <div class="pct" id="pctText">0%</div>
-  </div>
-</div>
-
-<div class="card" id="content"></div>
-
-<div class="footer">Ein kleiner Schritt zählt.</div>
 
 </div>
 
 <script>
 const EXERCISES={
-  Kniebeugen:{name:"Kniebeugen",hint:"Füsse schulterbreit, Rücken stabil.",video:"https://www.youtube.com/results?search_query=Kniebeugen+richtige+Ausführung"},
-  Liegestuetze:{name:"Liegestütze",hint:"Körper in Linie halten.",video:"https://www.youtube.com/results?search_query=Liegestütze+richtige+Ausführung"},
-  Plank:{name:"Plank",hint:"Bauch fest, nicht durchhängen.",video:"https://www.youtube.com/results?search_query=Plank+Technik"},
-  Ausfallschritte:{name:"Ausfallschritte",hint:"Oberkörper aufrecht.",video:"https://www.youtube.com/results?search_query=Ausfallschritte+Technik"},
-  MountainClimbers:{name:"Mountain Climbers",hint:"Hüfte ruhig halten.",video:"https://www.youtube.com/results?search_query=Mountain+Climbers+Technik"},
-  BicycleCrunch:{name:"Bicycle Crunch",hint:"Langsam und kontrolliert.",video:"https://www.youtube.com/results?search_query=Bicycle+Crunch+Technik"},
-  Seitstuetz:{name:"Seitstütz",hint:"Hüfte hochziehen.",video:"https://www.youtube.com/results?search_query=Seitstütz+Technik"},
-  Burpees:{name:"Burpees",hint:"Saubere Ausführung.",video:"https://www.youtube.com/results?search_query=Burpees+Technik"}
+  Kniebeugen:{name:"Kniebeugen",video:"https://www.youtube.com/results?search_query=Kniebeugen+richtige+Ausführung"},
+  Liegestuetze:{name:"Liegestütze",video:"https://www.youtube.com/results?search_query=Liegestütze+richtige+Ausführung"},
+  Plank:{name:"Plank",video:"https://www.youtube.com/results?search_query=Plank+Technik"},
+  Ausfallschritte:{name:"Ausfallschritte",video:"https://www.youtube.com/results?search_query=Ausfallschritte+Technik"},
+  MountainClimbers:{name:"Mountain Climbers",video:"https://www.youtube.com/results?search_query=Mountain+Climbers+Technik"},
+  BicycleCrunch:{name:"Bicycle Crunch",video:"https://www.youtube.com/results?search_query=Bicycle+Crunch+Technik"},
+  Seitstuetz:{name:"Seitstütz",video:"https://www.youtube.com/results?search_query=Seitstütz+Technik"},
+  Burpees:{name:"Burpees",video:"https://www.youtube.com/results?search_query=Burpees+Technik"}
 };
 
 const DAY_PATTERNS={
-  A:["Kniebeugen","Liegestuetze","Plank","Ausfallschritte","Seitstuetz"],
+  A:["Kniebeugen","Liegestuetze","Plank","Ausfallschritte"],
   B:["MountainClimbers","BicycleCrunch","Plank","Kniebeugen"],
   C:["Burpees","Seitstuetz","BicycleCrunch","Ausfallschritte"],
   Pause:[]
 };
 
 const ROTATION=["A","B","C","Pause","A","B","Pause"];
-const STORAGE_KEY="trainingsplan_ios";
+const STORAGE_KEY="trainingsplan_list_v2";
 
-let state={date:new Date(),index:0,progress:JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")};
+let state={
+  date:new Date(),
+  progress:JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")
+};
 
 function formatDate(d){
   return d.getDate()+". "+d.toLocaleString("de-CH",{month:"long"})+" "+d.getFullYear();
 }
-function dayKey(d){return d.toDateString();}
-function getWeekSeconds(day){
-  if(day<=7)return 30;
-  if(day<=14)return 40;
-  if(day<=21)return 20;
-  return 45;
+
+function dayKey(d){
+  return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+}
+
+function changeDay(offset){
+  state.date.setDate(state.date.getDate()+offset);
+  render();
 }
 
 function render(){
   const day=state.date.getDate();
   const pattern=ROTATION[(day-1)%ROTATION.length];
   const key=dayKey(state.date);
-  if(!state.progress[key])state.progress[key]={};
 
   document.getElementById("dateText").textContent=formatDate(state.date);
-  document.getElementById("dayChip").textContent="Tag "+pattern;
-  document.getElementById("weekChip").textContent=getWeekSeconds(day)+" Sek";
+
+  const container=document.getElementById("tasks");
+  container.innerHTML="";
 
   if(pattern==="Pause"){
-    document.getElementById("content").innerHTML="<div>Erholungstag – 10 Minuten Spaziergang.</div>";
+    container.innerHTML="<div class='task'>Erholungstag – 10 Minuten Bewegung.</div>";
+    document.getElementById("progressBar").style.width="0%";
     return;
   }
 
+  if(!state.progress[key]) state.progress[key]={};
+
   const list=DAY_PATTERNS[pattern];
-  const ex=list[state.index];
-  const exData=EXERCISES[ex];
 
-  const doneCount=Object.values(state.progress[key]).filter(Boolean).length;
-  const pct=Math.round((doneCount/list.length)*100);
+  let doneCount=0;
 
-  document.getElementById("barFill").style.width=pct+"%";
-  document.getElementById("pctText").textContent=pct+"%";
-  document.getElementById("statusChip").textContent=pct===100?"geschafft":"offen";
+  list.forEach((id)=>{
+    if(state.progress[key][id]) doneCount++;
 
-  document.getElementById("content").innerHTML=`
-    <div class="exerciseCard">
-      <div class="exName">${exData.name}</div>
-      <div class="exHint">${exData.hint}</div>
-      <a class="videoBtn" href="${exData.video}" target="_blank">▶ Video</a>
-      <div class="checkRow">
-        <label><input type="checkbox" id="doneBox" ${state.progress[key][ex]?"checked":""}> erledigt</label>
-        <div>${state.index+1}/${list.length}</div>
+    const ex=EXERCISES[id];
+
+    const task=document.createElement("div");
+    task.className="task";
+
+    task.innerHTML=`
+      <div class="task-top">
+        <div class="task-name">${ex.name}</div>
+        <a class="video-btn" href="${ex.video}" target="_blank">Video</a>
       </div>
-    </div>
-  `;
+      <div class="checkbox">
+        <input type="checkbox" ${state.progress[key][id]?"checked":""}>
+        erledigt
+      </div>
+    `;
 
-  document.getElementById("doneBox").onchange=function(){
-    state.progress[key][ex]=this.checked;
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(state.progress));
-    render();
-  };
+    task.querySelector("input").addEventListener("change",(e)=>{
+      state.progress[key][id]=e.target.checked;
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(state.progress));
+      render();
+    });
+
+    container.appendChild(task);
+  });
+
+  const percent=Math.round((doneCount/list.length)*100);
+  document.getElementById("progressBar").style.width=percent+"%";
 }
-
-document.getElementById("prevDay").onclick=()=>{state.date.setDate(state.date.getDate()-1);state.index=0;render();};
-document.getElementById("nextDay").onclick=()=>{state.date.setDate(state.date.getDate()+1);state.index=0;render();};
 
 render();
 
@@ -300,5 +229,6 @@ if("serviceWorker" in navigator){
   navigator.serviceWorker.register("./sw.js");
 }
 </script>
+
 </body>
 </html>
