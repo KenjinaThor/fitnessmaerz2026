@@ -59,7 +59,7 @@
     const wd = (t.getDay() + 6) % 7;
     return dkey(wd <= 2 ? mondayOf(t) : addDays(mondayOf(t), 7));
   }
-  const defaults = () => ({ v: 1, settings: { name: '', goal: 5, start: defaultStart(), theme: 'auto', sound: true, vibrate: true, wake: true, seen: '' }, history: [], body: [], tests: [], custom: [], draft: null });
+  const defaults = () => ({ v: 1, settings: { name: '', goal: 5, start: defaultStart(), theme: 'auto', sound: true, vibrate: true, wake: true, seen: '', health: false }, history: [], body: [], tests: [], custom: [], draft: null });
   let S = load();
   function load() {
     try {
@@ -434,7 +434,7 @@
   H.newcustom = () => { ED = { id: uid().replace(/^/, 'c_'), name: '', items: [], isNew: true }; openEditor(); };
   H.editcustom = d => { const c = S.custom.find(x => x.id === d.id); ED = JSON.parse(JSON.stringify(c)); openEditor(); };
   function openEditor() { $('#screen').classList.add('open'); renderEditor(); }
-  function closeEditor() { $('#screen').classList.remove('open'); $('#screen').innerHTML = ''; ED = null; }
+  function closeEditor() { $('#screen').classList.remove('open'); $('#screen').innerHTML = ''; ED = null; setTimeout(applyUpdate, 500); }
   function renderEditor() {
     const sc = $('#screen'), y = sc.scrollTop;
     sc.innerHTML = '<div style="max-width:600px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 40px"><div class="row" style="margin-bottom:14px"><button class="iconbtn" data-act="edcancel" aria-label="Schliessen">' + icon('x') + '</button><h2 class="grow" style="font-size:20px">' + (ED.isNew ? 'Neues Workout' : 'Workout bearbeiten') + '</h2><button class="btn primary sm" data-act="edsave">Speichern</button></div>' +
@@ -563,7 +563,8 @@
       '<div class="section-title">Darstellung & Verhalten</div><div class="card"><label class="field"><span>Design</span><select data-ch="theme"><option value="auto"' + (s.theme === 'auto' ? ' selected' : '') + '>Automatisch</option><option value="light"' + (s.theme === 'light' ? ' selected' : '') + '>Hell</option><option value="dark"' + (s.theme === 'dark' ? ' selected' : '') + '>Dunkel</option></select></label>' +
       [['sound', 'Signaltöne', 'Countdown und Pausenende'], ['vibrate', 'Vibration', 'Bei Pausenende (nicht auf iPhone)'], ['wake', 'Bildschirm anlassen', 'Während des Trainings']].map(t => '<div class="switch"><div><div class="bold">' + t[1] + '</div><div class="small muted">' + t[2] + '</div></div><label class="tgl"><input type="checkbox" data-ch="tg" data-k="' + t[0] + '"' + (s[t[0]] ? ' checked' : '') + '><i></i></label></div>').join('') + '</div>' +
       '<div class="section-title">Daten</div><div class="card"><p class="small muted">Alle Daten liegen nur auf diesem Gerät (' + Math.max(1, Math.round(bytes / 1024)) + ' KB, ' + S.history.length + ' Trainings). Sichere sie regelmässig, besonders vor dem Löschen von Browserdaten.</p><div style="display:grid;gap:10px;margin-top:12px"><button class="btn block" data-act="exportjson">' + icon('download') + ' Backup exportieren (JSON)</button><button class="btn block" data-act="exportcsv">' + icon('download') + ' Trainingsdaten exportieren (CSV)</button><label class="btn block" style="cursor:pointer">Backup importieren<input type="file" accept="application/json,.json" data-ch="import" class="hide"></label><button class="btn block danger" data-act="resetall">Alle Daten löschen</button></div></div>' +
-      '<div class="section-title">App</div><div class="card"><button class="item" style="padding:0;border:0" data-act="changelog"><div class="badge" style="background:var(--surface2);color:var(--accent2)">' + icon('info') + '</div><div class="grow"><div class="t">Update-Historie</div><div class="s">Version ' + VERSION + ' · ' + fmtDate(CHANGELOG[0].date, { day: 'numeric', month: 'long', year: 'numeric' }) + '</div></div>' + icon('chev', 'chev') + '</button></div>' +
+      '<div class="section-title">App</div><div class="card"><button class="item" style="padding:0;border:0" data-act="changelog"><div class="badge" style="background:var(--surface2);color:var(--accent2)">' + icon('info') + '</div><div class="grow"><div class="t">Update-Historie</div><div class="s">Version ' + VERSION + ' · ' + fmtDate(CHANGELOG[0].date, { day: 'numeric', month: 'long', year: 'numeric' }) + '</div></div>' + icon('chev', 'chev') + '</button><button class="item" data-act="checkupdate"><div class="badge" style="background:var(--surface2);color:var(--accent2)">' + icon('download') + '</div><div class="grow"><div class="t">Nach Updates suchen</div><div class="s">Die App aktualisiert sich automatisch</div></div>' + icon('chev', 'chev') + '</button></div>' +
+      '<div class="section-title">Apple Health & Watch</div><div class="card"><div class="switch" style="padding-top:0"><div><div class="bold">Health-Eintrag nach Training</div><div class="small muted">Startet nach dem Speichern den Kurzbefehl „Winter-Fit Health“</div></div><label class="tgl"><input type="checkbox" data-ch="tg" data-k="health"' + (s.health ? ' checked' : '') + '><i></i></label></div><button class="btn block mt12" data-act="healthhelp">Einrichtung & Apple Watch</button></div>' +
       '<div class="section-title">Tipps</div><div class="card small muted"><p><b style="color:var(--text)">Als App installieren:</b> Safari → Teilen → „Zum Home-Bildschirm" (iPhone) oder Chrome → „App installieren" (Android). Danach funktioniert alles auch offline.</p><p class="mt8"><b style="color:var(--text)">Gewichte:</b> Langhantel-Übungen nur mit Ständer oder Hilfe laden. Wähle ein Gewicht, mit dem 2 saubere Wiederholungen übrig bleiben.</p><p class="mt8"><b style="color:var(--text)">Schmerz:</b> Bei stechenden Schmerzen abbrechen. Die App ersetzt keine ärztliche oder physiotherapeutische Beratung.</p></div>' +
       '<p class="tiny muted center mt16">Winter-Fit · Version ' + VERSION + '</p>';
   };
@@ -595,6 +596,45 @@
     r.readAsText(f);
   };
   H.resetall = () => confirmSheet('Wirklich alles löschen?', 'Trainings, Messwerte und eigene Workouts werden unwiderruflich entfernt. Erstelle vorher ein Backup.', [{ label: 'Alles löschen', cls: 'danger', fn: () => { S = defaults(); save(); applyTheme(); render(); toast('Daten gelöscht'); } }, { label: 'Abbrechen' }]);
+
+  /* ---- Apple Health & Watch ---- */
+  H.healthhelp = () => openSheet(() => ({
+    title: 'Apple Health & Watch', body:
+      '<p class="small muted">Eine Web-App darf Apple Health nicht direkt beschreiben. Mit einem Kurzbefehl (einmalig, ca. 2 Minuten) trägt Winter-Fit trotzdem jedes Training als Workout in Health ein – es erscheint dann auch in der Fitness-App und in deinen Aktivitätsringen.</p>' +
+      '<div class="blk">Einrichtung auf dem iPhone</div><ol class="cues"><li>App <b>Kurzbefehle</b> öffnen, oben rechts <b>+</b> tippen.</li><li>Namen des Kurzbefehls: <b>Winter-Fit Health</b> (genau so).</li><li>Aktion <b>Training protokollieren</b> hinzufügen. Art: z. B. <b>Funktionelles Krafttraining</b>.</li><li>Dauer antippen → Variable <b>Kurzbefehl-Eingabe</b> wählen, Einheit <b>Minuten</b>.</li><li>Fertig. In Winter-Fit unter Profil den Schalter <b>Health-Eintrag nach Training</b> aktivieren.</li></ol>' +
+      '<div class="tip">Beim ersten Mal fragt iOS nach der Erlaubnis, Daten in Health zu schreiben und den Kurzbefehl zu öffnen. Nach dem Eintrag wechselst du per Wischgeste zurück zu Winter-Fit.</div>' +
+      '<div class="blk">Apple Watch</div><ul class="cues"><li><b>Herzfrequenz & Kalorien:</b> Starte parallel zum Training die Workout-App auf der Watch (z. B. „Krafttraining“) und beende sie am Ende. Dann schaltest du den Health-Eintrag besser aus, damit nichts doppelt gezählt wird.</li><li><b>Kurzbefehl auf der Watch:</b> Du kannst „Winter-Fit Health“ auch aus der Kurzbefehle-App der Watch starten, falls du ein Training nachtragen willst.</li><li>Eine eigene Winter-Fit-App auf der Watch ist als Web-App nicht möglich. Dafür wäre eine native iOS-/watchOS-App nötig.</li></ul>'
+  }));
+
+  /* ---- Automatische Updates ---- */
+  let swReg = null, pendingVer = null, updating = false;
+  const ss = { get: k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { /* ignorieren */ } } };
+  async function remoteVersion() {
+    const r = await fetch('data.js?_=' + Date.now(), { cache: 'no-store' });
+    const m = (await r.text()).match(/const VERSION = '([^']+)'/);
+    return m ? m[1] : null;
+  }
+  const busy = () => !!R || $('#screen').classList.contains('open');
+  function applyUpdate() {
+    if (!pendingVer || updating || busy()) return;
+    updating = true; toast('Update ' + pendingVer + ' wird geladen …');
+    const reload = () => location.reload();
+    if (swReg && navigator.serviceWorker) { navigator.serviceWorker.addEventListener('controllerchange', reload, { once: true }); swReg.update().catch(() => {}); setTimeout(reload, 5000); }
+    else setTimeout(reload, 600);
+  }
+  async function checkUpdate(manual) {
+    try {
+      const v = await remoteVersion();
+      if (v && v !== VERSION) {
+        if (!manual && ss.get('wf.try') === v) return; // Schleifenschutz
+        ss.set('wf.try', v); pendingVer = v;
+        if (busy()) toast('Update ' + v + ' bereit – wird nach dem Training geladen'); else applyUpdate();
+      } else if (manual) toast('Du hast die neueste Version (' + VERSION + ')');
+    } catch (e) { if (manual) toast('Keine Verbindung – Update-Suche nicht möglich'); }
+  }
+  H.checkupdate = () => { toast('Suche nach Updates …'); checkUpdate(true); };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(false); });
+  setInterval(() => { if (document.visibilityState === 'visible') checkUpdate(false); }, 30 * 60 * 1000);
 
   /* ---- Update-Historie ---- */
   function changelogBody() {
@@ -649,6 +689,7 @@
   function closeRunner() {
     if (R) clearInterval(R.iv);
     R = null; unlockScreen(); $('#runner').classList.remove('open'); $('#runner').innerHTML = '';
+    setTimeout(applyUpdate, 1500);
   }
   function stepEx() { return EXMAP[R.steps[R.idx].ex]; }
   function initStep() {
@@ -817,7 +858,8 @@
       '<div class="sumgrid"><div class="stat"><div class="v">' + fmtMin(dur).replace(' Min', '') + '</div><div class="l">Minuten</div></div><div class="stat"><div class="v">' + sets + '</div><div class="l">Sätze</div></div><div class="stat"><div class="v">' + (R.vol >= 1000 ? rnd1(R.vol / 1000) + 't' : Math.round(R.vol)) + '</div><div class="l">Volumen kg</div></div></div>' +
       (R.prs.length ? R.prs.map(p => '<div class="pr">' + icon('trophy') + '<div><div>' + esc(EXMAP[p.ex].name) + '</div><div class="small" style="font-weight:600">' + esc(p.txt) + '</div></div></div>').join('') : '') +
       '<div class="blk">Wie anstrengend war es? <span id="rpeVal" class="bold" style="color:var(--text)">' + R.rpe + '/10</span></div><input type="range" min="1" max="10" value="' + R.rpe + '" data-in="rpe" style="width:100%" aria-label="Anstrengung"><div class="tiny muted" style="display:flex;justify-content:space-between"><span>leicht</span><span>maximal</span></div>' +
-      '<label class="field mt16"><span>Notiz</span><textarea data-in="rnote" placeholder="Wie hat es sich angefühlt? (optional)" maxlength="300"></textarea></label></div>' +
+      '<label class="field mt16"><span>Notiz</span><textarea data-in="rnote" placeholder="Wie hat es sich angefühlt? (optional)" maxlength="300"></textarea></label>' +
+      '<div class="switch"><div><div class="bold">In Apple Health eintragen</div><div class="small muted">Über den Kurzbefehl „Winter-Fit Health“</div></div><label class="tgl"><input type="checkbox" data-ch="tg" data-k="health"' + (S.settings.health ? ' checked' : '') + '><i></i></label></div></div>' +
       '<div class="rn-foot"><button class="btn primary big block" data-act="rnsave">Speichern</button><button class="btn ghost block mt8" data-act="rndiscard">Nicht speichern</button></div></div>';
   }
   I.rpe = v => { R.rpe = +v; const e = $('#rpeVal'); if (e) e.textContent = v + '/10'; };
@@ -825,7 +867,10 @@
   H.rnsave = () => {
     const now = new Date();
     S.history.push({ id: uid(), date: dkey(now), ts: now.getTime(), sid: R.sid, name: R.name, kind: R.kind, dur: Math.round(R.active), sets: R.logs, vol: Math.round(R.vol * 10) / 10, prs: R.prs.length, rpe: R.rpe, note: R.note.trim() });
-    S.draft = null; save(); closeRunner(); go('today'); toast('Training gespeichert');
+    S.draft = null; save();
+    const mins = Math.max(1, Math.round(R.active / 60)), health = S.settings.health;
+    closeRunner(); go('today'); toast('Training gespeichert');
+    if (health) setTimeout(() => { location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent('Winter-Fit Health') + '&input=text&text=' + mins; }, 600);
   };
   H.rndiscard = () => confirmSheet('Nicht speichern?', 'Dieses Training wird verworfen.', [{ label: 'Verwerfen', cls: 'danger', fn: () => { S.draft = null; save(); closeRunner(); render(); } }, { label: 'Zurück' }]);
 
@@ -834,6 +879,7 @@
   matchMedia('(prefers-color-scheme: dark)').addEventListener && matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
   render();
   announceUpdate();
-  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => { swReg = r; }).catch(() => {});
+  checkUpdate(false);
   window.__winterfit = { get state() { return S; } };
 })();
