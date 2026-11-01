@@ -1,4 +1,4 @@
-/* Winterfit – App-Logik */
+/* Winter-Fit – App-Logik */
 (function () {
   'use strict';
   const { CAT, EQ, EX, EXMAP, SESS, QUICK, WEEK, PHASES, TESTS, VERSION, CHANGELOG } = window.DATA;
@@ -565,7 +565,7 @@
       '<div class="section-title">Daten</div><div class="card"><p class="small muted">Alle Daten liegen nur auf diesem Gerät (' + Math.max(1, Math.round(bytes / 1024)) + ' KB, ' + S.history.length + ' Trainings). Sichere sie regelmässig, besonders vor dem Löschen von Browserdaten.</p><div style="display:grid;gap:10px;margin-top:12px"><button class="btn block" data-act="exportjson">' + icon('download') + ' Backup exportieren (JSON)</button><button class="btn block" data-act="exportcsv">' + icon('download') + ' Trainingsdaten exportieren (CSV)</button><label class="btn block" style="cursor:pointer">Backup importieren<input type="file" accept="application/json,.json" data-ch="import" class="hide"></label><button class="btn block danger" data-act="resetall">Alle Daten löschen</button></div></div>' +
       '<div class="section-title">App</div><div class="card"><button class="item" style="padding:0;border:0" data-act="changelog"><div class="badge" style="background:var(--surface2);color:var(--accent2)">' + icon('info') + '</div><div class="grow"><div class="t">Update-Historie</div><div class="s">Version ' + VERSION + ' · ' + fmtDate(CHANGELOG[0].date, { day: 'numeric', month: 'long', year: 'numeric' }) + '</div></div>' + icon('chev', 'chev') + '</button></div>' +
       '<div class="section-title">Tipps</div><div class="card small muted"><p><b style="color:var(--text)">Als App installieren:</b> Safari → Teilen → „Zum Home-Bildschirm" (iPhone) oder Chrome → „App installieren" (Android). Danach funktioniert alles auch offline.</p><p class="mt8"><b style="color:var(--text)">Gewichte:</b> Langhantel-Übungen nur mit Ständer oder Hilfe laden. Wähle ein Gewicht, mit dem 2 saubere Wiederholungen übrig bleiben.</p><p class="mt8"><b style="color:var(--text)">Schmerz:</b> Bei stechenden Schmerzen abbrechen. Die App ersetzt keine ärztliche oder physiotherapeutische Beratung.</p></div>' +
-      '<p class="tiny muted center mt16">Winterfit · Version ' + VERSION + '</p>';
+      '<p class="tiny muted center mt16">Winter-Fit · Version ' + VERSION + '</p>';
   };
   I.name = v => { S.settings.name = v; save(); };
   H.goal = d => { S.settings.goal = Math.min(7, Math.max(1, S.settings.goal + +d.d)); save(); render(); };
@@ -575,11 +575,11 @@
     const a = document.createElement('a'), url = URL.createObjectURL(new Blob([text], { type }));
     a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
-  H.exportjson = () => download('winterfit-backup-' + dkey(new Date()) + '.json', JSON.stringify(S, null, 2), 'application/json');
+  H.exportjson = () => download('winter-fit-backup-' + dkey(new Date()) + '.json', JSON.stringify(S, null, 2), 'application/json');
   H.exportcsv = () => {
     const rows = [['Datum', 'Workout', 'Übung', 'Satz', 'Seite', 'Gewicht_kg', 'Wiederholungen', 'Sekunden']];
     S.history.slice().sort((a, b) => a.ts - b.ts).forEach(h => h.sets.forEach(s => rows.push([h.date, h.name, (EXMAP[s.ex] || { name: s.ex }).name, s.set, s.side || '', s.w || '', s.r || '', s.t || ''])));
-    download('winterfit-training-' + dkey(new Date()) + '.csv', '﻿' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\n'), 'text/csv');
+    download('winter-fit-training-' + dkey(new Date()) + '.csv', '﻿' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\n'), 'text/csv');
   };
   C.import = (v, el) => {
     const f = el.files[0]; if (!f) return;

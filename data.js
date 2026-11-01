@@ -452,10 +452,11 @@
   ];
 
   // Neueste Version zuerst
-  const VERSION = '2.1.0';
+  const VERSION = '2.2.0';
   const CHANGELOG = [
+    { v: '2.2.0', date: '2026-11-01', title: 'Neuer Name und Icon', items: ['Die App heisst jetzt Winter-Fit', 'Neues Icon: Schneekristall mit Langhantel', 'Optimiert für iPhone: Icon ohne Ränder auf dem Home-Bildschirm und kein Zoomen durch Doppeltippen'] },
     { v: '2.1.0', date: '2026-11-01', title: 'Update-Historie', items: ['Neue Update-Historie im Profil', 'Nach einem Update erscheint einmalig „Neu in dieser Version“'] },
-    { v: '2.0.0', date: '2026-11-01', title: 'Winterfit – komplett neu', items: ['12-Wochen-Winterprogramm in 3 Phasen mit Entlastungswochen', '86 Übungen für Gymnastikball, Lang- und Kurzhanteln und Balancierscheibe', 'Geführter Workout-Modus mit Timern, Pausen und Gewichts-Protokoll', 'Bestwerte, Wochenziel, Serie, Aktivitätskalender und Verlauf pro Übung', 'Körper-Check für Balance, Beweglichkeit und Rumpfkraft', 'Eigene Workouts, Backup-Export (JSON/CSV) und Offline-Betrieb', 'Hell- und Dunkelmodus'] },
+    { v: '2.0.0', date: '2026-11-01', title: 'Winter-Fit – komplett neu', items: ['12-Wochen-Winterprogramm in 3 Phasen mit Entlastungswochen', '86 Übungen für Gymnastikball, Lang- und Kurzhanteln und Balancierscheibe', 'Geführter Workout-Modus mit Timern, Pausen und Gewichts-Protokoll', 'Bestwerte, Wochenziel, Serie, Aktivitätskalender und Verlauf pro Übung', 'Körper-Check für Balance, Beweglichkeit und Rumpfkraft', 'Eigene Workouts, Backup-Export (JSON/CSV) und Offline-Betrieb', 'Hell- und Dunkelmodus'] },
     { v: '1.0.0', date: '2026-03-01', title: 'Trainingsplan März', items: ['Tagesplan mit Checkliste, Video-Links und Timer'] }
   ];
 

@@ -27,6 +27,8 @@ html{color-scheme:light dark}
 :root[data-theme="dark"]{color-scheme:dark}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
+button,a,label,summary{touch-action:manipulation}
+button{-webkit-user-select:none;user-select:none}
 button{cursor:pointer}
 h1,h2,h3,p{margin:0}
 .svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
