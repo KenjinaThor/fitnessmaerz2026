@@ -1,7 +1,7 @@
 /* Winter-Fit – App-Logik */
 (function () {
   'use strict';
-  const { CAT, EQ, EX, EXMAP, SESS, QUICK, WEEK, PHASES, TESTS, VERSION, CHANGELOG } = window.DATA;
+  const { CAT, EQ, EX, EXMAP, SESS, QUICK, WEEK, PHASES, TESTS, VERSION, CHANGELOG, SOURCES } = window.DATA;
 
   /* ================= Utils ================= */
   const $ = (s, r) => (r || document).querySelector(s);
@@ -50,7 +50,7 @@
     download: '<path d="M12 4v11M7 11l5 5 5-5M4 20h16"/>'
   };
   const icon = (n, c) => '<svg class="svg ' + (c || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + IC[n] + '</svg>';
-  const KIND_ICON = { strength: 'dumbbell', mobility: 'wave', cond: 'flame', core: 'target', flow: 'leaf', custom: 'dumbbell' };
+  const KIND_ICON = { strength: 'dumbbell', mobility: 'wave', cond: 'flame', core: 'target', flow: 'leaf', custom: 'dumbbell', ext: 'flame' };
 
   /* ================= Store ================= */
   const KEY = 'winterfit.v1';
@@ -59,7 +59,7 @@
     const wd = (t.getDay() + 6) % 7;
     return dkey(wd <= 2 ? mondayOf(t) : addDays(mondayOf(t), 7));
   }
-  const defaults = () => ({ v: 1, settings: { name: '', goal: 5, start: defaultStart(), theme: 'auto', sound: true, vibrate: true, wake: true, seen: '', health: false }, history: [], body: [], tests: [], custom: [], draft: null });
+  const defaults = () => ({ v: 1, settings: { name: '', goal: 5, start: defaultStart(), theme: 'auto', sound: true, vibrate: true, wake: true, seen: '', health: false }, history: [], body: [], tests: [], custom: [], draft: null, plan: { week: WEEK.slice(), edits: {} } });
   let S = load();
   function load() {
     try {
@@ -92,10 +92,12 @@
     const wk = Math.max(0, Math.floor(diff / 7));
     return { diff, wk, ph: Math.min(2, Math.floor(wk / 4)), deload: wk % 4 === 3, before: diff < 0 };
   }
-  function sessionFor(date) { const id = WEEK[(date.getDay() + 6) % 7]; return id ? SESS[id] : null; }
+  const planWeek = () => (S.plan && Array.isArray(S.plan.week) && S.plan.week.length === 7) ? S.plan.week : WEEK;
+  function sessionFor(date) { const id = planWeek()[(date.getDay() + 6) % 7]; return id ? getSession(id) : null; }
+  function getBase(id) { return SESS[id] || QUICK[id] || null; }
   function getSession(id) {
-    if (SESS[id]) return SESS[id];
-    if (QUICK[id]) return QUICK[id];
+    const base = getBase(id);
+    if (base) { const ed = S.plan.edits[id]; return ed ? Object.assign({}, base, { blocks: ed.blocks, edited: true }) : base; }
     const c = S.custom.find(x => x.id === id);
     if (c) return { id: c.id, name: c.name, sub: 'Eigenes Workout', kind: 'custom', custom: true, blocks: [{ n: 'Workout', items: c.items.map(i => ({ ex: i.ex, s: i.s, r: i.r, rest: i.rest })) }] };
     return null;
@@ -302,8 +304,8 @@
     const m0 = mondayOf(now);
     h += '<div class="section-title">Diese Woche</div><div class="week">';
     for (let i = 0; i < 7; i++) {
-      const d = addDays(m0, i), k = dkey(d), sid = WEEK[i], done = S.history.some(x => x.date === k), isT = k === key;
-      h += '<button class="day ' + (isT ? 'today ' : '') + (done ? 'done ' : '') + (sid ? '' : 'off') + '" data-act="preview" data-id="' + (sid || 'q_morning') + '" aria-label="' + WD[i] + '"><span class="wd">' + WD[i] + '</span><span class="dn">' + d.getDate() + '</span><span class="dot">' + (done ? icon('check') : sid ? icon(KIND_ICON[SESS[sid].kind]) : icon('moon')) + '</span></button>';
+      const d = addDays(m0, i), k = dkey(d), sid = planWeek()[i], done = S.history.some(x => x.date === k), isT = k === key;
+      h += '<button class="day ' + (isT ? 'today ' : '') + (done ? 'done ' : '') + (sid ? '' : 'off') + '" data-act="preview" data-id="' + (sid || 'q_morning') + '" aria-label="' + WD[i] + '"><span class="wd">' + WD[i] + '</span><span class="dn">' + d.getDate() + '</span><span class="dot">' + (done ? icon('check') : sid ? icon(KIND_ICON[getSession(sid).kind]) : icon('moon')) + '</span></button>';
     }
     h += '</div>';
 
@@ -315,11 +317,15 @@
     const pct = Math.min(100, Math.round(((pl.wk + (pl.before ? 0 : ((pl.diff % 7) + 1) / 7)) / 12) * 100));
     h += '<div class="card mt12"><div class="row"><div class="grow bold">Winterprogramm</div><span class="small muted">' + (pl.before ? (pl.diff === -1 ? 'beginnt morgen' : 'beginnt in ' + (-pl.diff) + ' Tagen') : pl.wk >= 12 ? 'abgeschlossen – weiter so' : 'Woche ' + (pl.wk + 1) + ' von 12') + '</span></div><div class="progress mt8"><div style="width:' + (pl.before ? 0 : pct) + '%"></div></div><div class="small muted mt8">' + esc(PHASES[pl.ph].d) + '</div></div>';
 
+    // Coach
+    const ch = coachHints().slice(0, 2);
+    h += '<div class="section-title">Coach<button data-act="opencoach">Alle Hinweise</button></div>' + (ch.length ? ch.map(hintCard).join('') : '<div class="card empty"><b>Noch keine Auswertung</b>Sobald du trainiert hast, bewertet der Coach deine Belastung anhand von Studien und Richtlinien.</div>');
+    h += '<button class="btn block mt12" data-act="logext">' + icon('plus') + ' Aktivität eintragen (Fussball, Golf, Laufen …)</button>';
     // Schnelle Einheiten
     h += '<div class="section-title">Schnelle Einheiten</div><div class="scroll-x">' + Object.values(QUICK).map(q => '<button class="qcard k-' + q.kind + '" data-act="preview" data-id="' + q.id + '">' + icon(KIND_ICON[q.kind]) + '<b>' + esc(q.name) + '</b><span>' + esc(q.sub.split('·')[0]) + '</span></button>').join('') + '</div>';
 
     const last = S.history.slice().sort((a, b) => b.ts - a.ts)[0];
-    if (last) h += '<div class="section-title">Zuletzt</div><div class="card"><button class="item" style="padding:0;border:0" data-act="histdetail" data-id="' + last.id + '">' + kindBadge(last.kind || 'strength') + '<div class="grow"><div class="t">' + esc(last.name) + '</div><div class="s">' + fmtDate(last.date, { weekday: 'long', day: 'numeric', month: 'short' }) + ' · ' + fmtMin(last.dur) + ' · ' + last.sets.length + ' Sätze</div></div>' + icon('chev', 'chev') + '</button></div>';
+    if (last) h += '<div class="section-title">Zuletzt</div><div class="card"><button class="item" style="padding:0;border:0" data-act="histdetail" data-id="' + last.id + '">' + kindBadge(last.kind || 'strength') + '<div class="grow"><div class="t">' + esc(last.name) + '</div><div class="s">' + fmtDate(last.date, { weekday: 'long', day: 'numeric', month: 'short' }) + ' · ' + fmtMin(last.dur) + (last.sets.length ? ' · ' + last.sets.length + ' Sätze' : '') + '</div></div>' + icon('chev', 'chev') + '</button></div>';
     return h;
   };
 
@@ -344,7 +350,8 @@
       });
     });
     b += '<button class="btn primary big block mt16" data-act="start" data-id="' + id + '">' + icon('play', 'fill') + ' Training starten</button>';
-    return { title: esc(sess.name), body: b };
+    b += sess.custom ? '<button class="btn block mt12" data-act="editcustom" data-id="' + id + '">' + icon('edit') + ' Bearbeiten</button>' : '<button class="btn block mt12" data-act="editplan" data-id="' + id + '">' + icon('edit') + ' Einheit anpassen' + (sess.edited ? ' (bereits angepasst)' : '') + '</button>';
+    return { title: esc(sess.name) + (sess.edited ? ' <span class="chip accent" style="vertical-align:middle">angepasst</span>' : ''), body: b };
   }
 
   /* ---- Übungsdetail ---- */
@@ -365,26 +372,29 @@
 
   /* ---- Programm ---- */
   V.plan = function () {
-    const pl = curPlan();
+    const pl = curPlan(), week = planWeek(), DAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
     let h = '<div class="page-head"><div><div class="sub">Winterpause</div><h1>Programm</h1></div></div>';
-    h += '<div class="card"><div class="bold">Dein Ziel für den Winter</div><p class="small muted mt8">Kondition halten, Rumpf stärken, Mobilität verbessern und den Körper besser steuern – für mehr Kraft im Golfschwung und mehr Antritt und Stabilität im Fussball. Alles zuhause mit Gymnastikball, Lang- und Kurzhanteln und Balancierscheibe.</p><div class="chips mt12"><span class="chip">2× Kraft</span><span class="chip">1× Kondition</span><span class="chip">1× Rumpf & Rotation</span><span class="chip">1× Mobilität & Balance</span><span class="chip">1× Flow</span></div></div>';
+    h += '<div class="card"><div class="bold">Dein Winterziel</div><p class="small muted mt8">Kondition halten, Rumpf kräftigen, Beweglichkeit verbessern und Körperkontrolle schulen – zuhause mit Gymnastikball, Lang- und Kurzhanteln und Balancierscheibe. Der Plan ist ein Vorschlag: Du kannst jede Einheit anpassen und den Wochenplan ändern.</p><div style="display:grid;gap:10px;margin-top:12px"><button class="btn primary block" data-act="assistant">Plan-Assistent</button><button class="btn block" data-act="editweek">Wochenplan anpassen</button></div></div>';
+    const ph = planHints(week, pl.ph);
+    if (ph.length) h += '<div class="section-title">Plan-Check</div>' + ph.map(hintCard).join('');
     h += '<div class="section-title">12 Wochen · 3 Phasen</div><div class="card">';
     PHASES.forEach((p, i) => { h += '<div class="phase ' + (pl.ph === i && !pl.before ? 'on' : '') + '"><div class="num">' + (i + 1) + '</div><div><div class="bold">' + p.n + ' <span class="muted small">· ' + p.w + '</span></div><div class="small muted">' + esc(p.d) + '</div></div></div>'; });
-    h += '<p class="small muted mt12">Jede 4. Woche ist eine Entlastungswoche mit weniger Sätzen, damit sich der Körper anpasst.</p></div>';
+    h += '<p class="small muted mt12">Jede 4. Woche hat weniger Sätze (Entlastungswoche). Phasen und Entlastung sind Planungsentscheidungen der App; ACSM (2009) sieht Variation der Belastung über die Zeit als sinnvoll an.</p></div>';
 
     h += '<div class="section-title">Wochenplan</div><div class="card list">';
-    WEEK.forEach((sid, i) => {
-      if (!sid) { h += '<div class="item">' + '<div class="badge k-custom" style="background:var(--surface2);color:var(--muted)">' + icon('moon') + '</div><div class="grow"><div class="t">' + ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'][i] + ' · Ruhetag</div><div class="s">Spaziergang, Fussball oder Golf nach Lust</div></div></div>'; return; }
-      const s = SESS[sid], m = sessMeta(s, pl.ph, pl.deload);
-      h += '<button class="item" data-act="preview" data-id="' + sid + '">' + kindBadge(s.kind) + '<div class="grow"><div class="t">' + ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'][i] + ' · ' + esc(s.name) + '</div><div class="s">' + esc(s.sub) + ' · ' + m.min + ' Min</div></div>' + icon('chev', 'chev') + '</button>';
+    week.forEach((sid, i) => {
+      const s = sid ? getSession(sid) : null;
+      if (!s) { h += '<div class="item"><div class="badge" style="background:var(--surface2);color:var(--muted)">' + icon('moon') + '</div><div class="grow"><div class="t">' + DAYS[i] + ' · Ruhetag</div><div class="s">Erholung, Spaziergang oder eigene Aktivität</div></div></div>'; return; }
+      const m = sessMeta(s, pl.ph, pl.deload);
+      h += '<button class="item" data-act="preview" data-id="' + sid + '">' + kindBadge(s.kind) + '<div class="grow"><div class="t">' + DAYS[i] + ' · ' + esc(s.name) + (s.edited ? ' <span class="chip accent">angepasst</span>' : '') + '</div><div class="s">' + esc(s.sub) + ' · ' + m.min + ' Min</div></div>' + icon('chev', 'chev') + '</button>';
     });
     h += '</div><p class="small muted mt8">Du kannst jede Einheit jederzeit starten – auch an einem anderen Tag.</p>';
 
-    h += '<div class="section-title">Schnelle Einheiten</div><div class="card list">' + Object.values(QUICK).map(q => { const m = sessMeta(q, pl.ph, false); return '<button class="item" data-act="preview" data-id="' + q.id + '">' + kindBadge(q.kind) + '<div class="grow"><div class="t">' + esc(q.name) + '</div><div class="s">' + esc(q.sub) + '</div></div>' + icon('chev', 'chev') + '</button>'; }).join('') + '</div>';
+    h += '<div class="section-title">Schnelle Einheiten</div><div class="card list">' + Object.values(QUICK).map(q => { const qq = getSession(q.id); return '<button class="item" data-act="preview" data-id="' + q.id + '">' + kindBadge(q.kind) + '<div class="grow"><div class="t">' + esc(q.name) + (qq.edited ? ' <span class="chip accent">angepasst</span>' : '') + '</div><div class="s">' + esc(q.sub) + '</div></div>' + icon('chev', 'chev') + '</button>'; }).join('') + '</div>';
 
     h += '<div class="section-title">Eigene Workouts<button data-act="newcustom">+ Neu</button></div>';
     if (!S.custom.length) h += '<div class="card empty"><b>Noch keine eigenen Workouts</b>Stelle dir aus der Übungsbibliothek eigene Einheiten zusammen.</div>';
-    else h += '<div class="card list">' + S.custom.map(c => '<div class="item">' + '<button class="row grow" style="background:none;border:0;padding:0;text-align:left" data-act="preview" data-id="' + c.id + '">' + kindBadge('custom') + '<div class="grow"><div class="t">' + esc(c.name) + '</div><div class="s">' + c.items.length + ' Übungen</div></div></button><button class="iconbtn" data-act="editcustom" data-id="' + c.id + '" aria-label="Bearbeiten">' + icon('edit') + '</button></div>').join('') + '</div>';
+    else h += '<div class="card list">' + S.custom.map(c => '<div class="item"><button class="row grow" style="background:none;border:0;padding:0;text-align:left" data-act="preview" data-id="' + c.id + '">' + kindBadge('custom') + '<div class="grow"><div class="t">' + esc(c.name) + '</div><div class="s">' + c.items.length + ' Übungen</div></div></button><button class="iconbtn" data-act="editcustom" data-id="' + c.id + '" aria-label="Bearbeiten">' + icon('edit') + '</button></div>').join('') + '</div>';
 
     h += '<div class="section-title">Einstellungen</div><div class="card"><label class="field"><span>Programmstart (Montag empfohlen)</span><input type="date" data-ch="start" value="' + esc(S.settings.start) + '"></label><p class="small muted">Daraus berechnen sich Woche und Phase.</p></div>';
     return h;
@@ -428,43 +438,143 @@
   H.pkeq = d => { PK.eq = d.v; pkRefresh(); };
   H.pkpick = d => { const cb = PK.cb; popSheet(); if (cb) cb(d.id); };
 
-  /* ---- Eigene Workouts: Editor ---- */
+  /* ---- Editor: eigene Workouts und Anpassung der Einheiten ---- */
   let ED = null;
+  const isTimeTrack = id => { const t = EXMAP[id].track; return t === 't' || t === 'wt'; };
+  const resolveBlocks = (sess, ph) => sess.blocks.map(b => {
+    const nb = Object.assign({}, b);
+    if (b.circuit) { nb.rounds = norm(b.rounds, ph); nb.work = norm(b.work, ph); nb.items = b.items.slice(); }
+    else nb.items = b.items.map(it => ({ ex: it.ex, s: norm(it.s, ph), r: norm(it.r, ph), rest: norm(it.rest == null ? 45 : it.rest, ph) }));
+    return nb;
+  });
   function defItem(id) { const t = EXMAP[id].track; return { ex: id, s: 3, r: t === 'wr' ? 10 : t === 'r' ? 12 : 30, rest: t === 'wr' ? 60 : 30 }; }
-  H.newcustom = () => { ED = { id: uid().replace(/^/, 'c_'), name: '', items: [], isNew: true }; openEditor(); };
-  H.editcustom = d => { const c = S.custom.find(x => x.id === d.id); ED = JSON.parse(JSON.stringify(c)); openEditor(); };
+  const edShown = b => b.minPhase == null || curPlan().ph >= b.minPhase;
+  H.newcustom = () => { ED = { type: 'custom', id: 'c_' + uid(), name: '', isNew: true, blocks: [{ n: 'Workout', items: [] }] }; openEditor(); };
+  H.editcustom = d => { const c = S.custom.find(x => x.id === d.id); ED = { type: 'custom', id: c.id, name: c.name, blocks: [{ n: 'Workout', items: c.items.map(i => Object.assign({}, i)) }] }; H.sheetclose(); openEditor(); };
+  H.editplan = d => {
+    const base = getBase(d.id), ed = S.plan.edits[d.id];
+    ED = { type: 'plan', id: d.id, name: base.name, edited: !!ed, blocks: ed ? JSON.parse(JSON.stringify(ed.blocks)) : resolveBlocks(base, curPlan().ph) };
+    H.sheetclose(); openEditor();
+  };
   function openEditor() { $('#screen').classList.add('open'); renderEditor(); }
   function closeEditor() { $('#screen').classList.remove('open'); $('#screen').innerHTML = ''; ED = null; setTimeout(applyUpdate, 500); }
   function renderEditor() {
-    const sc = $('#screen'), y = sc.scrollTop;
-    sc.innerHTML = '<div style="max-width:600px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 40px"><div class="row" style="margin-bottom:14px"><button class="iconbtn" data-act="edcancel" aria-label="Schliessen">' + icon('x') + '</button><h2 class="grow" style="font-size:20px">' + (ED.isNew ? 'Neues Workout' : 'Workout bearbeiten') + '</h2><button class="btn primary sm" data-act="edsave">Speichern</button></div>' +
-      '<label class="field"><span>Name</span><input type="text" data-in="edname" value="' + esc(ED.name) + '" placeholder="z. B. Oberkörper Express" maxlength="40"></label>' +
-      ED.items.map((it, i) => { const e = EXMAP[it.ex], sec = e.track === 't' || e.track === 'wt'; return '<div class="card"><div class="row"><div class="grow bold">' + esc(e.name) + '</div><button class="iconbtn" data-act="edup" data-i="' + i + '" aria-label="Nach oben" ' + (i === 0 ? 'disabled' : '') + '>↑</button><button class="iconbtn" data-act="eddel" data-i="' + i + '" aria-label="Entfernen">' + icon('trash') + '</button></div>' +
-        '<div class="row mt12" style="gap:8px"><label class="field grow" style="margin:0"><span>Sätze</span><input type="number" inputmode="numeric" min="1" max="10" data-in="editem" data-i="' + i + '" data-f="s" value="' + it.s + '"></label><label class="field grow" style="margin:0"><span>' + (sec ? 'Sekunden' : 'Wdh.') + '</span><input type="number" inputmode="numeric" min="1" max="600" data-in="editem" data-i="' + i + '" data-f="r" value="' + it.r + '"></label><label class="field grow" style="margin:0"><span>Pause s</span><input type="number" inputmode="numeric" min="0" max="600" data-in="editem" data-i="' + i + '" data-f="rest" value="' + it.rest + '"></label></div>' + (e.side ? '<div class="tiny muted mt8">Pro Seite</div>' : '') + '</div>'; }).join('') +
-      '<button class="btn block mt16" data-act="edadd">' + icon('plus') + ' Übung hinzufügen</button>' + (!ED.isNew ? '<button class="btn block danger mt12" data-act="eddelete">Workout löschen</button>' : '') + '</div>';
-    sc.scrollTop = y;
+    const sc = $('#screen'), y = sc.scrollTop, plan = ED.type === 'plan';
+    let h = '<div style="max-width:600px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 40px"><div class="row" style="margin-bottom:14px"><button class="iconbtn" data-act="edcancel" aria-label="Schliessen">' + icon('x') + '</button><h2 class="grow" style="font-size:20px">' + (plan ? 'Einheit anpassen' : ED.isNew ? 'Neues Workout' : 'Workout bearbeiten') + '</h2><button class="btn primary sm" data-act="edsave">Speichern</button></div>';
+    h += plan ? '<div class="card"><div class="bold">' + esc(ED.name) + '</div><p class="small muted mt8">Ersetze, ergänze oder lösche Übungen und ändere Sätze, Wiederholungen und Pausen. Deine Werte gelten dann in allen Phasen (die automatische Steigerung entfällt für diese Einheit).</p></div>' : '<label class="field"><span>Name</span><input type="text" data-in="edname" value="' + esc(ED.name) + '" placeholder="z. B. Oberkörper Express" maxlength="40"></label>';
+    ED.blocks.forEach((bl, bi) => {
+      if (!edShown(bl)) return;
+      if (plan) h += '<div class="blk">' + esc(bl.n) + '</div>';
+      if (bl.circuit) h += '<div class="card"><div class="row" style="gap:8px"><label class="field grow" style="margin:0"><span>Runden</span><input type="number" inputmode="numeric" min="1" max="20" data-in="edcirc" data-b="' + bi + '" data-f="rounds" value="' + bl.rounds + '"></label><label class="field grow" style="margin:0"><span>Arbeit s</span><input type="number" inputmode="numeric" min="5" max="300" data-in="edcirc" data-b="' + bi + '" data-f="work" value="' + bl.work + '"></label><label class="field grow" style="margin:0"><span>Pause s</span><input type="number" inputmode="numeric" min="0" max="300" data-in="edcirc" data-b="' + bi + '" data-f="rest" value="' + bl.rest + '"></label></div></div>';
+      bl.items.forEach((it, i) => {
+        const id = bl.circuit ? it : it.ex, e = EXMAP[id], sec = isTimeTrack(id);
+        h += '<div class="card"><div class="row"><div class="grow bold">' + esc(e.name) + '</div><button class="iconbtn" data-act="edswap" data-b="' + bi + '" data-i="' + i + '" aria-label="Ersetzen">' + icon('swap') + '</button><button class="iconbtn" data-act="edup" data-b="' + bi + '" data-i="' + i + '" aria-label="Nach oben" ' + (i === 0 ? 'disabled' : '') + '>↑</button><button class="iconbtn" data-act="eddel" data-b="' + bi + '" data-i="' + i + '" aria-label="Entfernen">' + icon('trash') + '</button></div>';
+        if (!bl.circuit) h += '<div class="row mt12" style="gap:8px"><label class="field grow" style="margin:0"><span>Sätze</span><input type="number" inputmode="numeric" min="1" max="10" data-in="editem" data-b="' + bi + '" data-i="' + i + '" data-f="s" value="' + it.s + '"></label><label class="field grow" style="margin:0"><span>' + (sec ? 'Sekunden' : 'Wdh.') + '</span><input type="number" inputmode="numeric" min="1" max="600" data-in="editem" data-b="' + bi + '" data-i="' + i + '" data-f="r" value="' + it.r + '"></label><label class="field grow" style="margin:0"><span>Pause s</span><input type="number" inputmode="numeric" min="0" max="600" data-in="editem" data-b="' + bi + '" data-i="' + i + '" data-f="rest" value="' + it.rest + '"></label></div>' + (e.side ? '<div class="tiny muted mt8">Pro Seite</div>' : '');
+        h += '</div>';
+      });
+      h += '<button class="btn block" data-act="edadd" data-b="' + bi + '">' + icon('plus') + ' Übung hinzufügen</button>';
+    });
+    if (plan && ED.edited) h += '<button class="btn block mt16" data-act="edreset">Auf Vorschlag zurücksetzen</button>';
+    if (!plan && !ED.isNew) h += '<button class="btn block danger mt12" data-act="eddelete">Workout löschen</button>';
+    sc.innerHTML = h + '</div>'; sc.scrollTop = y;
   }
   I.edname = v => { ED.name = v; };
-  I.editem = (v, el, d) => { ED.items[+d.i][d.f] = Math.max(0, parseInt(v, 10) || 0); };
-  H.edadd = () => pickExercise(id => { ED.items.push(defItem(id)); renderEditor(); });
-  H.eddel = d => { ED.items.splice(+d.i, 1); renderEditor(); };
-  H.edup = d => { const i = +d.i; if (i > 0) { const t = ED.items[i]; ED.items[i] = ED.items[i - 1]; ED.items[i - 1] = t; renderEditor(); } };
+  I.editem = (v, el, d) => { ED.blocks[+d.b].items[+d.i][d.f] = Math.max(0, parseInt(v, 10) || 0); };
+  I.edcirc = (v, el, d) => { ED.blocks[+d.b][d.f] = Math.max(0, parseInt(v, 10) || 0); };
+  H.edadd = d => pickExercise(id => { const bl = ED.blocks[+d.b]; bl.items.push(bl.circuit ? id : defItem(id)); renderEditor(); });
+  H.edswap = d => {
+    const bl = ED.blocks[+d.b], i = +d.i, cur = bl.circuit ? bl.items[i] : bl.items[i].ex;
+    pickExercise(id => {
+      if (bl.circuit) bl.items[i] = id;
+      else { const it = bl.items[i], was = isTimeTrack(it.ex); it.ex = id; if (isTimeTrack(id) !== was) it.r = was ? 10 : 30; }
+      renderEditor();
+    }, EXMAP[cur].cat);
+  };
+  H.eddel = d => { ED.blocks[+d.b].items.splice(+d.i, 1); renderEditor(); };
+  H.edup = d => { const it = ED.blocks[+d.b].items, i = +d.i; if (i > 0) { const t = it[i]; it[i] = it[i - 1]; it[i - 1] = t; renderEditor(); } };
   H.edcancel = () => closeEditor();
   H.edsave = () => {
-    if (!ED.name.trim()) return toast('Bitte einen Namen eingeben');
-    if (!ED.items.length) return toast('Füge mindestens eine Übung hinzu');
-    ED.items.forEach(i => { i.s = Math.max(1, i.s); i.r = Math.max(1, i.r); });
-    const o = { id: ED.id, name: ED.name.trim(), items: ED.items };
-    const k = S.custom.findIndex(c => c.id === o.id);
-    if (k >= 0) S.custom[k] = o; else S.custom.push(o);
-    save(); closeEditor(); render(); toast('Workout gespeichert');
+    const total = ED.blocks.reduce((n, b) => n + (edShown(b) ? b.items.length : 0), 0);
+    if (ED.type === 'custom' && !ED.name.trim()) return toast('Bitte einen Namen eingeben');
+    if (!total) return toast('Füge mindestens eine Übung hinzu');
+    ED.blocks.forEach(b => {
+      if (b.circuit) { b.rounds = Math.max(1, b.rounds); b.work = Math.max(5, b.work); }
+      else b.items.forEach(i => { i.s = Math.max(1, i.s); i.r = Math.max(1, i.r); });
+    });
+    if (ED.type === 'plan') S.plan.edits[ED.id] = { blocks: ED.blocks };
+    else {
+      const o = { id: ED.id, name: ED.name.trim(), items: ED.blocks[0].items }, k = S.custom.findIndex(c => c.id === o.id);
+      if (k >= 0) S.custom[k] = o; else S.custom.push(o);
+    }
+    save(); closeEditor(); render(); toast('Gespeichert');
   };
+  H.edreset = () => confirmSheet('Auf Vorschlag zurücksetzen?', 'Deine Anpassungen an dieser Einheit gehen verloren.', [{ label: 'Zurücksetzen', cls: 'danger', fn: () => { delete S.plan.edits[ED.id]; save(); closeEditor(); render(); toast('Vorschlag wiederhergestellt'); } }, { label: 'Abbrechen' }]);
   H.eddelete = () => confirmSheet('Workout löschen?', ED.name, [{ label: 'Löschen', cls: 'danger', fn: () => { S.custom = S.custom.filter(c => c.id !== ED.id); save(); closeEditor(); render(); } }, { label: 'Abbrechen' }]);
+
+  /* ---- Wochenplan anpassen ---- */
+  H.editweek = () => openSheet(() => {
+    const DAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'], week = planWeek();
+    const opts = cur => '<option value="">Ruhetag</option>' + [['Einheiten', Object.values(SESS)], ['Schnelle Einheiten', Object.values(QUICK)], ['Eigene Workouts', S.custom.map(c => ({ id: c.id, name: c.name }))]].filter(g => g[1].length).map(g => '<optgroup label="' + g[0] + '">' + g[1].map(x => '<option value="' + x.id + '"' + (x.id === cur ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</optgroup>').join('');
+    return { title: 'Wochenplan anpassen', body: DAYS.map((d, i) => '<label class="field"><span>' + d + '</span><select data-ch="wkset" data-i="' + i + '">' + opts(week[i]) + '</select></label>').join('') + '<p class="small muted">Änderungen gelten sofort. Der Plan-Check im Programm zeigt dir, wie der Wochenplan zu den Richtlinien passt.</p><button class="btn primary block mt12" data-act="sheetclose">Fertig</button>' };
+  });
+  C.wkset = (v, el, d) => { S.plan.week[+d.i] = v || null; save(); render(); };
+
+  /* ---- Plan-Assistent ---- */
+  const PL = { days: 5, focus: 'bal' };
+  const WEEK_TABLE = {
+    bal: { 2: ['kraftA', 'kraftB'], 3: ['kraftA', 'cond', 'kraftB'], 4: ['kraftA', 'control', 'cond', 'kraftB'], 5: ['kraftA', 'control', 'cond', 'core', 'kraftB'], 6: ['kraftA', 'control', 'cond', 'core', 'kraftB', 'flow'] },
+    cond: { 2: ['kraftA', 'kraftB'], 3: ['kraftA', 'cond', 'kraftB'], 4: ['kraftA', 'cond', 'cond', 'kraftB'], 5: ['kraftA', 'cond', 'core', 'cond', 'kraftB'], 6: ['kraftA', 'cond', 'control', 'cond', 'kraftB', 'flow'] },
+    mob: { 2: ['kraftA', 'kraftB'], 3: ['kraftA', 'control', 'kraftB'], 4: ['kraftA', 'control', 'flow', 'kraftB'], 5: ['kraftA', 'control', 'cond', 'flow', 'kraftB'], 6: ['kraftA', 'control', 'cond', 'flow', 'kraftB', 'control'] }
+  };
+  const WEEK_POS = { 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5] };
+  function suggestWeek(days, focus) {
+    const w = [null, null, null, null, null, null, null], list = WEEK_TABLE[focus][days];
+    WEEK_POS[days].forEach((pos, k) => { w[pos] = list[k]; });
+    return w;
+  }
+  H.assistant = () => openSheet(assistantSheet);
+  function assistantSheet() {
+    const w = suggestWeek(PL.days, PL.focus), pl = curPlan(), DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    const sel = (key, val, arr) => '<select data-ch="' + key + '">' + arr.map(a => '<option value="' + a[0] + '"' + (String(a[0]) === String(val) ? ' selected' : '') + '>' + a[1] + '</option>').join('') + '</select>';
+    return {
+      title: 'Plan-Assistent', body:
+        '<p class="small muted">Der Assistent wählt aus den vorhandenen Einheiten einen Wochenplan nach festen Regeln der WHO- und ACSM-Richtlinien. Er kennt dich nicht persönlich und ersetzt keine Beratung.</p>' +
+        '<label class="field mt12"><span>Trainingstage pro Woche</span>' + sel('pldays', PL.days, [[2, '2 Tage'], [3, '3 Tage'], [4, '4 Tage'], [5, '5 Tage'], [6, '6 Tage']]) + '</label>' +
+        '<label class="field"><span>Schwerpunkt</span>' + sel('plfocus', PL.focus, [['bal', 'Ausgewogen'], ['cond', 'Mehr Kondition'], ['mob', 'Mehr Mobilität & Balance']]) + '</label>' +
+        '<div class="blk">Vorschlag</div><div class="card" style="box-shadow:none">' + w.map((id, i) => '<div class="tr" style="grid-template-columns:40px 1fr"><div class="bold">' + DAYS[i] + '</div><div>' + (id ? esc(getBase(id).name) : '<span class="muted">Ruhetag</span>') + '</div></div>').join('') + '</div>' +
+        planHints(w, pl.ph).map(hintCard).join('') +
+        '<button class="btn primary big block mt16" data-act="plapply">Plan übernehmen</button><p class="tiny muted mt8">Dein Wochenziel wird auf ' + w.filter(Boolean).length + ' Einheiten gesetzt. Deine eigenen Anpassungen an Einheiten bleiben erhalten.</p>'
+    };
+  }
+  C.pldays = v => { PL.days = +v; refreshSheet(); };
+  C.plfocus = v => { PL.focus = v; refreshSheet(); };
+  H.plapply = () => { const w = suggestWeek(PL.days, PL.focus); S.plan.week = w; S.settings.goal = Math.min(7, w.filter(Boolean).length); save(); H.sheetclose(); render(); toast('Wochenplan übernommen'); };
+
+  /* ---- Aktivität eintragen ---- */
+  const EXT = [['Fussball Training', true], ['Fussball Spiel', true], ['Golf (zu Fuss)', true], ['Golf (mit Cart)', false], ['Laufen', true], ['Radfahren', true], ['Schwimmen', true], ['Zügiges Gehen', true], ['Andere Aktivität', false]];
+  H.logext = () => openSheet(() => ({
+    title: 'Aktivität eintragen', body:
+      '<p class="small muted">Trage auch Aktivitäten ausserhalb des Plans ein. Sie fliessen in die Belastungsauswertung des Coaches ein.</p>' +
+      '<label class="field mt12"><span>Aktivität</span><select id="x_type" data-ch="xtype">' + EXT.map((e, i) => '<option value="' + i + '">' + e[0] + '</option>').join('') + '</select></label>' +
+      '<label class="field"><span>Dauer (Minuten)</span><input type="number" inputmode="numeric" id="x_min" min="1" max="600" value="60"></label>' +
+      '<label class="field"><span>Anstrengung (0–10): <b id="x_rv">5</b></span><input type="range" id="x_rpe" min="0" max="10" value="5" style="width:100%" data-in="xrpe"><div class="tiny muted">0 = Ruhe, 3 = moderat, 5 = anstrengend, 7 = sehr anstrengend, 10 = maximal (Skala nach Foster)</div></label>' +
+      '<div class="switch"><div><div class="bold">Zählt als Ausdaueraktivität</div><div class="small muted">Puls deutlich erhöht, durchgehend in Bewegung</div></div><label class="tgl"><input type="checkbox" id="x_aer" checked><i></i></label></div>' +
+      '<button class="btn primary big block mt16" data-act="savext">Speichern</button>'
+  }));
+  C.xtype = v => { $('#x_aer').checked = EXT[+v][1]; };
+  I.xrpe = v => { $('#x_rv').textContent = v; };
+  H.savext = () => {
+    const min = parseInt($('#x_min').value, 10);
+    if (!(min > 0)) return toast('Bitte die Dauer eingeben');
+    const now = new Date();
+    S.history.push({ id: uid(), date: dkey(now), ts: now.getTime(), sid: 'ext', name: EXT[+$('#x_type').value][0], kind: 'ext', dur: min * 60, sets: [], vol: 0, prs: 0, rpe: +$('#x_rpe').value, aer: $('#x_aer').checked });
+    save(); H.sheetclose(); render(); toast('Aktivität gespeichert');
+  };
 
   /* ---- Fortschritt ---- */
   const PG = { tab: 'overview', ex: null };
   V.prog = function () {
-    let h = '<div class="page-head"><div><div class="sub">Deine Daten</div><h1>Fortschritt</h1></div></div><div class="seg">' + [['overview', 'Übersicht'], ['ex', 'Übungen'], ['body', 'Körper'], ['check', 'Check']].map(t => '<button class="' + (PG.tab === t[0] ? 'on' : '') + '" data-act="pgtab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>';
+    let h = '<div class="page-head"><div><div class="sub">Deine Daten</div><h1>Fortschritt</h1></div></div><div class="seg">' + [['overview', 'Übersicht'], ['coach', 'Coach'], ['ex', 'Übungen'], ['body', 'Körper'], ['check', 'Check']].map(t => '<button class="' + (PG.tab === t[0] ? 'on' : '') + '" data-act="pgtab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>';
     return h + PGV[PG.tab]();
   };
   H.pgtab = d => { PG.tab = d.t; render(); };
@@ -528,7 +638,7 @@
 
   PGV.check = function () {
     const ts = S.tests.slice().sort((a, b) => a.date.localeCompare(b.date)), first = ts[0], last = ts[ts.length - 1];
-    let h = '<div class="card"><div class="bold">Körper-Check</div><p class="small muted mt8">Misst Gleichgewicht, Beweglichkeit und Rumpfkraft. Wiederhole den Test alle 4 Wochen, um deinen Fortschritt zu sehen.</p>' + (last ? '<div class="small mt8">Letzter Check: <b>' + fmtDate(last.date, { day: 'numeric', month: 'long' }) + '</b>' + (daysBetween(parseKey(last.date), new Date()) >= 28 ? ' · <span class="delta up">Zeit für einen neuen Check</span>' : '') + '</div>' : '') + '<button class="btn primary block mt12" data-act="newcheck">' + (last ? 'Neuen Check durchführen' : 'Ersten Check durchführen') + '</button></div>';
+    let h = '<div class="card"><div class="bold">Körper-Check</div><p class="small muted mt8">Misst Gleichgewicht, Beweglichkeit und Rumpfkraft. Wiederhole den Test in regelmässigen Abständen (z. B. alle 4 Wochen), um Veränderungen zu vergleichen.</p>' + (last ? '<div class="small mt8">Letzter Check: <b>' + fmtDate(last.date, { day: 'numeric', month: 'long' }) + '</b>' + (daysBetween(parseKey(last.date), new Date()) >= 28 ? ' · <span class="delta up">Zeit für einen neuen Check</span>' : '') + '</div>' : '') + '<button class="btn primary block mt12" data-act="newcheck">' + (last ? 'Neuen Check durchführen' : 'Ersten Check durchführen') + '</button></div>';
     if (!last) return h;
     h += '<div class="section-title">Ergebnisse</div><div class="card list">';
     TESTS.forEach(t => {
@@ -538,8 +648,8 @@
       h += '<div class="tr"><div>' + esc(t.name) + '</div><div class="bold">' + v + ' ' + t.unit + '</div><div style="min-width:36px;text-align:right">' + d + '</div></div>';
     });
     h += '</div>';
-    const warn = [['stand_l', 'stand_r', 'Einbeinstand'], ['rot_l', 'rot_r', 'Rumpfrotation'], ['side_l', 'side_r', 'Seitstütz'], ['stand_closed_l', 'stand_closed_r', 'Einbeinstand (Augen zu)']].map(p => { const a = last.vals[p[0]], b = last.vals[p[1]]; if (a == null || b == null || !Math.max(a, b)) return ''; const diff = Math.abs(a - b) / Math.max(a, b); return diff >= .2 ? '<li>' + p[2] + ': ' + (a < b ? 'links' : 'rechts') + ' schwächer (' + Math.round(diff * 100) + ' % Unterschied). Trainiere diese Seite zuerst.</li>' : ''; }).join('');
-    if (warn) h += '<div class="tip" style="margin-top:12px"><b>Seitenunterschiede</b><ul class="cues">' + warn + '</ul></div>';
+    const warn = [['stand_l', 'stand_r', 'Einbeinstand'], ['rot_l', 'rot_r', 'Rumpfrotation'], ['side_l', 'side_r', 'Seitstütz'], ['stand_closed_l', 'stand_closed_r', 'Einbeinstand (Augen zu)']].map(p => { const a = last.vals[p[0]], b = last.vals[p[1]]; if (a == null || b == null || !Math.max(a, b)) return ''; const diff = Math.abs(a - b) / Math.max(a, b); return diff >= .2 ? '<li>' + p[2] + ': links ' + a + ' · rechts ' + b + ' (' + Math.round(diff * 100) + ' % Unterschied)</li>' : ''; }).join('');
+    if (warn) h += '<div class="tip" style="margin-top:12px"><b>Unterschiede links/rechts (ab 20 %)</b><ul class="cues">' + warn + '</ul><div class="small muted">Seitenunterschiede kommen vor und sind kein Befund. Die App stellt keine Diagnose.</div></div>';
     ['stand_l', 'plank', 'reach'].forEach(id => { const t = TESTS.find(x => x.id === id), pts = ts.filter(x => x.vals[id] != null).map(x => ({ t: parseKey(x.date).getTime(), v: x.vals[id] })); if (pts.length > 1) h += '<div class="section-title">' + esc(t.name) + '</div><div class="card">' + lineChart(pts, t.unit) + '</div>'; });
     return h;
   };
@@ -636,6 +746,118 @@
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(false); });
   setInterval(() => { if (document.visibilityState === 'visible') checkUpdate(false); }, 30 * 60 * 1000);
 
+  /* ================= Coach (nur Regeln mit Quelle) ================= */
+  const RES_CATS = ['uk', 'push', 'pull', 'core', 'rot'], STRENGTH_MIN_SETS = 6;
+  const resSets = sets => sets.filter(x => EXMAP[x.ex] && RES_CATS.includes(EXMAP[x.ex].cat)).length;
+  const GROUPS = [['uk', 'Beine & Gesäss'], ['push', 'Drücken (Brust, Schulter)'], ['pull', 'Ziehen (Rücken)'], ['core', 'Rumpf & Rotation'], ['mob', 'Mobilität'], ['bal', 'Balance & Kontrolle']];
+  const f1 = v => (Math.round(v * 10) / 10).toLocaleString('de-CH');
+  const loadOf = h => (h.rpe == null ? 5 : h.rpe) * h.dur / 60; // Session-RPE: Anstrengung x Minuten (Foster 2001)
+
+  function coachData() {
+    const t = new Date(), dk = i => dkey(addDays(t, -i)), hs = S.history;
+    const load = {}, res = {}, aer = {}, any = {}, grp = {};
+    let condMin14 = 0;
+    hs.forEach(h => {
+      const k = h.date; load[k] = (load[k] || 0) + loadOf(h); any[k] = 1;
+      const rs = resSets(h.sets); if (rs) res[k] = (res[k] || 0) + rs;
+      if (h.kind === 'cond' || (h.kind === 'ext' && h.aer)) aer[k] = (aer[k] || 0) + h.dur / 60;
+    });
+    const sum = (o, a, b) => { let x = 0; for (let i = a; i <= b; i++) x += o[dk(i)] || 0; return x; };
+    for (let i = 0; i < 14; i++) hs.filter(h => h.date === dk(i)).forEach(h => {
+      h.sets.forEach(x => { const e = EXMAP[x.ex]; if (e) { const g = e.cat === 'rot' ? 'core' : e.cat; grp[g] = (grp[g] || 0) + 1; } });
+      if (h.kind === 'cond') condMin14 += h.dur / 60;
+    });
+    const acute = sum(load, 0, 6), chronic = (acute + sum(load, 7, 13) + sum(load, 14, 20) + sum(load, 21, 27)) / 4;
+    const first = hs.length ? hs.reduce((m, h) => h.date < m ? h.date : m, hs[0].date) : null, span = first ? daysBetween(parseKey(first), t) : 0;
+    const acwr = (span >= 27 && chronic > 0) ? acute / chronic : null;
+    const dl = []; for (let i = 6; i >= 0; i--) dl.push(load[dk(i)] || 0);
+    const trainDays = dl.filter(x => x > 0).length, mean = dl.reduce((a, b) => a + b, 0) / 7;
+    const sd = Math.sqrt(dl.reduce((a, b) => a + (b - mean) * (b - mean), 0) / 6);
+    const mono = (span >= 6 && trainDays >= 3 && sd > 0) ? mean / sd : null;
+    const strengthDays = []; for (let i = 0; i < 14; i++) strengthDays.push((res[dk(i)] || 0) >= STRENGTH_MIN_SETS);
+    const sd7 = strengthDays.slice(0, 7).filter(Boolean).length;
+    let consec = null; for (let i = 0; i < 13; i++) if (strengthDays[i] && strengthDays[i + 1]) { consec = [dk(i + 1), dk(i)]; break; }
+    const last3 = hs.slice().sort((a, b) => b.ts - a.ts).slice(0, 3);
+    const lastDate = hs.length ? hs.reduce((m, h) => h.date > m ? h.date : m, hs[0].date) : null;
+    return { acute, chronic, acwr, mono, strain: mono ? acute * mono : null, trainDays, restDays: 7 - trainDays, strengthDays7: sd7, consec, aerMin7: sum(aer, 0, 6), grp, condMin14, span, last3, daysSince: lastDate ? daysBetween(parseKey(lastDate), t) : null, hasResistance14: strengthDays.some(Boolean), n28: hs.filter(h => daysBetween(parseKey(h.date), t) < 28).length };
+  }
+  function progression() {
+    const byEx = {};
+    S.history.slice().sort((a, b) => a.ts - b.ts).forEach(h => {
+      const g = {};
+      h.sets.forEach(x => { const e = EXMAP[x.ex]; if (e && e.track === 'wr' && x.tg > 0 && x.w > 0) (g[x.ex] = g[x.ex] || []).push(x); });
+      Object.keys(g).forEach(ex => (byEx[ex] = byEx[ex] || []).push(g[ex]));
+    });
+    const out = {};
+    Object.keys(byEx).forEach(ex => {
+      const L = byEx[ex]; if (L.length < 2) return;
+      const a = L[L.length - 2], b = L[L.length - 1], wa = Math.max.apply(null, a.map(x => x.w)), wb = Math.max.apply(null, b.map(x => x.w));
+      if (wa !== wb) return;
+      const ok = arr => arr.filter(x => x.w === wa).every(x => x.r >= x.tg + 2);
+      if (ok(a) && ok(b)) { const lo = Math.max(wa + .5, Math.round(wa * 1.02 * 2) / 2), hi = Math.max(lo, Math.round(wa * 1.10 * 2) / 2); out[ex] = { w: wa, lo, hi }; }
+    });
+    return out;
+  }
+  const LV = { warn: ['Achtung', 0], tip: ['Hinweis', 1], info: ['Info', 2] };
+  function hintCard(hn) {
+    return '<div class="hint ' + hn.level + '"><div class="row" style="gap:8px"><span class="chip ' + (hn.level === 'warn' ? 'warn' : hn.level === 'tip' ? 'accent' : '') + '">' + LV[hn.level][0] + '</span><div class="bold grow">' + esc(hn.title) + '</div></div><div class="small mt8">' + esc(hn.text) + '</div>' +
+      (hn.refs && hn.refs.length ? '<div class="tiny muted mt8">Quelle: ' + hn.refs.map(r => '<button class="refchip" data-act="sources">' + SOURCES[r].short + '</button>').join(' ') + '</div>' : '') + '</div>';
+  }
+  function coachHints() {
+    const out = [];
+    if (!S.history.length) return out;
+    const c = coachData();
+    if (c.acwr != null) {
+      const v = f1(c.acwr), base = 'Akut:Chronisch-Verhältnis ' + v + ' (Belastung der letzten 7 Tage gegenüber dem Wochenschnitt der letzten 4 Wochen). ';
+      if (c.acwr >= 1.5) out.push({ level: 'warn', title: 'Belastung deutlich über deinem Durchschnitt', text: base + 'In Studien mit Teamsportlern ging ein Verhältnis ab etwa 1,5 mit einem höheren Verletzungsrisiko einher. Das Modell ist umstritten; nimm es als Orientierung. Eine mögliche Reaktion ist, die Belastung der nächsten Tage zu senken.', refs: ['gab', 'imp'] });
+      else if (c.acwr > 1.3) out.push({ level: 'tip', title: 'Belastung über deinem Durchschnitt', text: base + 'Als günstiger Bereich gelten 0,8–1,3; du liegst darüber. Beobachte, wie du dich erholst.', refs: ['gab', 'imp'] });
+      else if (c.acwr < 0.8) out.push({ level: 'info', title: 'Belastung unter deinem Durchschnitt', text: base + 'Der Wert liegt unter 0,8. Das ist normal in einer Entlastungswoche oder nach einer Pause.', refs: ['gab', 'imp'] });
+      else out.push({ level: 'info', title: 'Belastung im günstigen Bereich', text: base + 'Der Wert liegt zwischen 0,8 und 1,3.', refs: ['gab', 'imp'] });
+    }
+    if (c.mono != null && c.mono > 2) out.push({ level: 'warn', title: 'Monotones Training in den letzten 7 Tagen', text: 'Monotonie ' + f1(c.mono) + ': Deine Tagesbelastung schwankt wenig. Studien an Athleten (Foster 1998, 2001) brachten Werte über 2,0 mit häufigeren Krankheiten und Übertraining in Verbindung. Foster empfiehlt, harte und leichte Tage zu variieren; ein freier Tag senkt den Wert.', refs: ['fos98', 'fos01'] });
+    if (c.restDays === 0) out.push({ level: 'tip', title: 'Kein freier Tag in den letzten 7 Tagen', text: 'Du hast an allen 7 Tagen trainiert. Gleichförmige Belastung ohne Abwechslung erhöht die Monotonie (Foster 2001). Plane leichte oder freie Tage ein.', refs: ['fos01'] });
+    if (c.span >= 6 && c.strengthDays7 < 2) out.push({ level: 'tip', title: 'Weniger als 2 Krafttage in 7 Tagen', text: 'Du hattest ' + c.strengthDays7 + ' Krafttag(e). Die WHO empfiehlt muskelkräftigende Aktivität an mindestens 2 Tagen pro Woche (als Krafttag zählt hier eine Einheit mit mindestens ' + STRENGTH_MIN_SETS + ' Kräftigungssätzen).', refs: ['who'] });
+    if (c.consec) out.push({ level: 'tip', title: 'Krafteinheiten an aufeinanderfolgenden Tagen', text: 'Am ' + fmtDate(c.consec[0]) + ' und ' + fmtDate(c.consec[1]) + ' hast du Kraft trainiert. Der ACSM nennt 48–72 Stunden Pause für dieselbe Muskelgruppe. Bei Ganzkörper-Einheiten betrifft das alle Gruppen.', refs: ['acsm'] });
+    if (c.hasResistance14) {
+      const miss = GROUPS.slice(0, 4).filter(g => !c.grp[g[0]]).map(g => g[1]);
+      if (miss.length) out.push({ level: 'tip', title: 'Muskelgruppen ohne Training (14 Tage)', text: 'Nicht trainiert: ' + miss.join(', ') + '. Die WHO empfiehlt, alle grossen Muskelgruppen zu kräftigen.', refs: ['who'] });
+    }
+    if (c.last3.length === 3 && c.last3.every(h => h.rpe >= 9)) out.push({ level: 'tip', title: 'Dreimal in Folge sehr hohe Anstrengung', text: 'Deine letzten 3 Einheiten lagen bei einer Anstrengung von 9–10 von 10. Foster empfiehlt, harte Einheiten mit leichten abzuwechseln.', refs: ['fos01'] });
+    if (c.daysSince != null && c.daysSince >= 7) out.push({ level: 'info', title: 'Seit ' + c.daysSince + ' Tagen kein Training erfasst', text: 'Nach einer Pause die Belastung schrittweise wieder steigern; der ACSM beschreibt eine progressive Laststeigerung.', refs: ['acsm'] });
+    const pg = progression(), ids = Object.keys(pg);
+    if (ids.length) out.push({ level: 'tip', title: 'Bereit für mehr Gewicht', text: ids.slice(0, 4).map(id => EXMAP[id].name + ': aktuell ' + f1(pg[id].w) + ' kg → ca. ' + f1(pg[id].lo) + '–' + f1(pg[id].hi) + ' kg').join(' · ') + '. Der ACSM nennt eine Steigerung um 2–10 %, wenn die geplanten Wiederholungen in zwei Einheiten in Folge um 1–2 übertroffen wurden.', refs: ['acsm'] });
+    return out.sort((a, b) => LV[a.level][1] - LV[b.level][1]);
+  }
+  function planHints(week, ph) {
+    const out = [], ss = week.map(id => id ? getSession(id) : null);
+    const res = ss.map(x => x ? buildSteps(x, ph, false).filter(st => RES_CATS.includes(EXMAP[st.ex].cat)).length : 0), sd = res.map(n => n >= STRENGTH_MIN_SETS), nS = sd.filter(Boolean).length;
+    const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    if (nS < 2) out.push({ level: 'warn', title: 'Weniger als 2 Krafttage', text: 'Der Plan enthält ' + nS + ' Krafttag(e). Die WHO empfiehlt muskelkräftigende Aktivität an mindestens 2 Tagen pro Woche (als Krafttag zählt hier eine Einheit mit mindestens ' + STRENGTH_MIN_SETS + ' Kräftigungssätzen).', refs: ['who'] });
+    for (let i = 0; i < 7; i++) if (nS > 1 && sd[i] && sd[(i + 1) % 7]) { out.push({ level: 'tip', title: 'Krafttage direkt hintereinander', text: DAYS[i] + ' und ' + DAYS[(i + 1) % 7] + ' sind beides Krafttage. Der ACSM nennt 48–72 Stunden Pause für dieselbe Muskelgruppe.', refs: ['acsm'] }); break; }
+    if (week.every(Boolean)) out.push({ level: 'tip', title: 'Kein freier Tag im Plan', text: 'Plane mindestens einen leichten oder freien Tag ein. Gleichförmige Belastung ohne Abwechslung erhöht die Monotonie (Foster 2001).', refs: ['fos01'] });
+    const cm = ss.reduce((n, x) => n + (x && x.kind === 'cond' ? sessMeta(x, ph, false).min : 0), 0);
+    out.push({ level: 'info', title: 'Geplante Kondition: ' + cm + ' Min pro Woche', text: 'Die WHO empfiehlt 150–300 Min moderate oder 75–150 Min intensive Ausdaueraktivität pro Woche. Aktivitäten wie Fussball, Laufen oder zügiges Gehen zählen mit; trage sie unter „Heute“ ein.', refs: ['who'] });
+    return out;
+  }
+  H.sources = () => pushSheet(() => ({ title: 'Quellen', body: '<p class="small muted">Alle Coach-Hinweise stützen sich auf diese Veröffentlichungen. Die Schwellenwerte stammen aus den Studien und sind Orientierung, keine Diagnose. Die App ersetzt keine ärztliche oder physiotherapeutische Beratung.</p>' + Object.keys(SOURCES).map(k => '<div class="card" style="box-shadow:none"><div class="bold">' + SOURCES[k].short + '</div><div class="small muted mt8">' + esc(SOURCES[k].full) + '</div></div>').join('') + '<div class="card" style="box-shadow:none"><div class="bold">Eigene Definitionen der App</div><div class="small muted mt8">Belastung = Anstrengung (0–10) × Minuten (Foster 2001). „Krafttag“ = Einheit mit mindestens ' + STRENGTH_MIN_SETS + ' Kräftigungssätzen. Monotonie = Mittelwert / Standardabweichung der Tagesbelastung der letzten 7 Tage. Akut = letzte 7 Tage, chronisch = Durchschnitt der letzten 4 Wochen.</div></div>' }));
+  H.opencoach = () => { PG.tab = 'coach'; go('prog'); };
+
+  PGV.coach = function () {
+    const c = coachData(), hints = coachHints();
+    const wk = []; const m0 = mondayOf(new Date());
+    for (let i = 7; i >= 0; i--) { const a = dkey(addDays(m0, -7 * i)), b = dkey(addDays(m0, -7 * i + 6)); wk.push({ d: addDays(m0, -7 * i), v: S.history.filter(h => h.date >= a && h.date <= b).reduce((n, h) => n + loadOf(h), 0) }); }
+    let h = '<div class="tip" style="margin-top:0">Der Coach rechnet mit veröffentlichten Methoden und Richtlinien. Jeder Hinweis nennt seine Quelle. Die Werte sind Orientierung, keine medizinische Beratung.</div>';
+    h += '<div class="section-title">Hinweise</div>' + (hints.length ? hints.map(hintCard).join('') : '<div class="card empty"><b>Noch keine Hinweise</b>Trage Trainings ein; ab etwa einer Woche Daten werten die Regeln aus.</div>');
+    h += '<div class="section-title">Belastung pro Woche</div><div class="card">' + barChart(wk.map(w => w.v), wk.map(w => w.d.getDate() + '.' + (w.d.getMonth() + 1)), 130) + '<div class="tiny muted center">Belastung = Anstrengung (0–10) × Minuten</div></div>';
+    h += '<div class="section-title">Kennzahlen</div><div class="card list">' +
+      [['Belastung letzte 7 Tage', Math.round(c.acute)], ['Ø Belastung pro Woche (4 Wochen)', Math.round(c.chronic)], ['Akut:Chronisch-Verhältnis', c.acwr != null ? f1(c.acwr) : 'ab 4 Wochen Daten'], ['Monotonie (7 Tage)', c.mono != null ? f1(c.mono) : 'mind. 3 Trainingstage'], ['Belastungsindex (Strain)', c.strain != null ? Math.round(c.strain) : '–'], ['Trainingstage (7 Tage)', c.trainDays + ' von 7'], ['Krafttage (7 Tage)', c.strengthDays7], ['Ausdauer-Minuten (7 Tage)', Math.round(c.aerMin7) + ' Min']].map(r => '<div class="tr" style="grid-template-columns:1fr auto"><div>' + r[0] + '</div><div class="bold">' + r[1] + '</div></div>').join('') + '</div>';
+    const mx = Math.max(1, Math.max.apply(null, GROUPS.map(g => c.grp[g[0]] || 0)));
+    h += '<div class="section-title">Verteilung (14 Tage, Sätze)</div><div class="card">' + GROUPS.map(g => '<div style="margin:8px 0"><div class="row small"><div class="grow">' + g[1] + '</div><b>' + (c.grp[g[0]] || 0) + '</b></div><div class="progress mt8"><div style="width:' + Math.round((c.grp[g[0]] || 0) / mx * 100) + '%"></div></div></div>').join('') + '<div class="small muted mt8">Kondition: ' + Math.round(c.condMin14) + ' Min in Konditions-Einheiten</div></div>';
+    h += '<details class="cuebox"><summary>Was bedeuten die Werte?</summary><ul class="cues"><li><b>Akut:Chronisch</b>: Belastung der letzten 7 Tage geteilt durch den Wochenschnitt der letzten 4 Wochen. 0,8–1,3 gilt als günstig, ab etwa 1,5 war in Studien das Verletzungsrisiko höher (Gabbett 2016). Das Modell wird kritisiert (Impellizzeri 2020).</li><li><b>Monotonie</b>: Mittelwert geteilt durch Standardabweichung der Tagesbelastung. Hohe Werte (über 2,0) hingen bei Athleten mit Krankheit und Übertraining zusammen (Foster 1998, 2001).</li><li><b>Strain</b>: Wochenbelastung × Monotonie (Foster).</li></ul></details>';
+    h += '<button class="btn block mt16" data-act="sources">Quellen anzeigen</button>';
+    return h;
+  };
+
   /* ---- Update-Historie ---- */
   function changelogBody() {
     return CHANGELOG.map((c, i) => '<div class="card" style="box-shadow:none"><div class="row"><div class="grow bold">' + esc(c.title) + '</div>' + (i === 0 ? '<span class="chip accent">aktuell</span>' : '') + '</div><div class="tiny muted">Version ' + esc(c.v) + ' · ' + fmtDate(c.date, { day: 'numeric', month: 'long', year: 'numeric' }) + '</div><ul class="cues">' + c.items.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></div>').join('');
@@ -681,7 +903,7 @@
     openRunner();
   }
   function openRunner() {
-    R.prev = prevIndex();
+    R.prev = prevIndex(); R.prog = progression();
     $('#runner').classList.add('open'); lockScreen();
     initStep(); clearInterval(R.iv); R.iv = setInterval(tick, 200);
     drawRunner();
@@ -709,7 +931,7 @@
     if (st.side) log.side = st.side;
     if (hasW(e)) log.w = R.cur.w || 0;
     if (timer) { const tot = st.secs || st.target; log.t = forceT != null ? forceT : (R.tm && R.tm.state === 'run' ? Math.max(1, Math.round(tot - R.tm.left / 1000)) : tot); }
-    else log.r = R.cur.r || 0;
+    else { log.r = R.cur.r || 0; log.tg = st.target || 0; }
     R.logs.push(log);
     advance(st.rest);
   }
@@ -794,6 +1016,7 @@
       body += '</div>';
     }
     if (hasW(e) && p && p.w) body += '<div class="center"><span class="prev">Zuletzt: ' + rnd1(p.w) + ' kg' + (p.r ? ' × ' + p.r : p.t ? ' · ' + p.t + ' s' : '') + '</span></div>';
+    if (R.prog[st.ex]) body += '<div class="center mt8"><span class="prev" style="color:var(--good)">Steigern möglich: ca. ' + f1(R.prog[st.ex].lo) + '–' + f1(R.prog[st.ex].hi) + ' kg (ACSM)</span></div>';
     body += '<details class="cuebox"' + (R.logs.some(l => l.ex === st.ex) ? '' : ' open') + '><summary>So geht’s</summary><ul class="cues">' + e.cues.map(c => '<li>' + esc(c) + '</li>').join('') + '</ul>' + (e.tip ? '<div class="small muted mt8">' + esc(e.tip) + '</div>' : '') + '</details>';
     body += '<div class="mini-actions"><button class="btn sm" data-act="rnswap">' + icon('swap') + ' Ersetzen</button><button class="btn sm" data-act="rnskip">' + icon('skip') + ' Überspringen</button><a class="btn sm" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(e.name + ' Übung Anleitung') + '">' + icon('video') + ' Video</a></div>';
     if (nx) body += '<div class="upnext"><span class="tiny muted bold" style="text-transform:uppercase">Danach</span><div class="bold">' + esc(EXMAP[nx.ex].name) + '</div></div>';

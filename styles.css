@@ -235,3 +235,10 @@ details.cuebox summary{font-weight:700;cursor:pointer}
 .delta.up{color:var(--good);font-weight:800}.delta.down{color:var(--bad);font-weight:800}
 .hide{display:none!important}
 @media (min-width:700px){#sheet{align-items:center}.sheetbox{border-radius:24px}}
+
+.k-ext{background:linear-gradient(135deg,#ec4899,#be185d)}
+.hero.k-ext{background:linear-gradient(135deg,#ec4899,#be185d)}
+.hint{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent2);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.hint.warn{border-left-color:var(--warn)}
+.hint.info{border-left-color:var(--muted)}
+.refchip{border:1px solid var(--line);background:var(--surface2);border-radius:99px;padding:2px 9px;font-size:11px;font-weight:700;color:var(--accent2)}
