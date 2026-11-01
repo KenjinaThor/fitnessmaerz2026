@@ -1,15 +1,18 @@
 {
-  "name": "Trainingsplan März",
-  "short_name": "Training",
+  "name": "Winterfit – Mobilität, Rumpf & Kondition",
+  "short_name": "Winterfit",
+  "description": "Winterprogramm für Fussball und Golf: Mobilität, Rumpfkraft, Kondition und Körperkontrolle von zuhause.",
+  "lang": "de-CH",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0ea5e9",
+  "orientation": "portrait",
+  "background_color": "#0a1220",
+  "theme_color": "#0a1220",
   "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
   ]
 }
