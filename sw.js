@@ -1,5 +1,5 @@
 /* Service Worker – App offline nutzbar machen */
-const CACHE = 'winterfit-v2';
+const CACHE = 'winterfit-v3';
 const ASSETS = ['./', 'index.html', 'styles.css', 'data.js', 'app.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

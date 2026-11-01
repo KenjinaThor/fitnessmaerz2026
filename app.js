@@ -1,7 +1,7 @@
 /* Winterfit – App-Logik */
 (function () {
   'use strict';
-  const { CAT, EQ, EX, EXMAP, SESS, QUICK, WEEK, PHASES, TESTS } = window.DATA;
+  const { CAT, EQ, EX, EXMAP, SESS, QUICK, WEEK, PHASES, TESTS, VERSION, CHANGELOG } = window.DATA;
 
   /* ================= Utils ================= */
   const $ = (s, r) => (r || document).querySelector(s);
@@ -59,7 +59,7 @@
     const wd = (t.getDay() + 6) % 7;
     return dkey(wd <= 2 ? mondayOf(t) : addDays(mondayOf(t), 7));
   }
-  const defaults = () => ({ v: 1, settings: { name: '', goal: 5, start: defaultStart(), theme: 'auto', sound: true, vibrate: true, wake: true }, history: [], body: [], tests: [], custom: [], draft: null });
+  const defaults = () => ({ v: 1, settings: { name: '', goal: 5, start: defaultStart(), theme: 'auto', sound: true, vibrate: true, wake: true, seen: '' }, history: [], body: [], tests: [], custom: [], draft: null });
   let S = load();
   function load() {
     try {
@@ -563,8 +563,9 @@
       '<div class="section-title">Darstellung & Verhalten</div><div class="card"><label class="field"><span>Design</span><select data-ch="theme"><option value="auto"' + (s.theme === 'auto' ? ' selected' : '') + '>Automatisch</option><option value="light"' + (s.theme === 'light' ? ' selected' : '') + '>Hell</option><option value="dark"' + (s.theme === 'dark' ? ' selected' : '') + '>Dunkel</option></select></label>' +
       [['sound', 'Signaltöne', 'Countdown und Pausenende'], ['vibrate', 'Vibration', 'Bei Pausenende (nicht auf iPhone)'], ['wake', 'Bildschirm anlassen', 'Während des Trainings']].map(t => '<div class="switch"><div><div class="bold">' + t[1] + '</div><div class="small muted">' + t[2] + '</div></div><label class="tgl"><input type="checkbox" data-ch="tg" data-k="' + t[0] + '"' + (s[t[0]] ? ' checked' : '') + '><i></i></label></div>').join('') + '</div>' +
       '<div class="section-title">Daten</div><div class="card"><p class="small muted">Alle Daten liegen nur auf diesem Gerät (' + Math.max(1, Math.round(bytes / 1024)) + ' KB, ' + S.history.length + ' Trainings). Sichere sie regelmässig, besonders vor dem Löschen von Browserdaten.</p><div style="display:grid;gap:10px;margin-top:12px"><button class="btn block" data-act="exportjson">' + icon('download') + ' Backup exportieren (JSON)</button><button class="btn block" data-act="exportcsv">' + icon('download') + ' Trainingsdaten exportieren (CSV)</button><label class="btn block" style="cursor:pointer">Backup importieren<input type="file" accept="application/json,.json" data-ch="import" class="hide"></label><button class="btn block danger" data-act="resetall">Alle Daten löschen</button></div></div>' +
+      '<div class="section-title">App</div><div class="card"><button class="item" style="padding:0;border:0" data-act="changelog"><div class="badge" style="background:var(--surface2);color:var(--accent2)">' + icon('info') + '</div><div class="grow"><div class="t">Update-Historie</div><div class="s">Version ' + VERSION + ' · ' + fmtDate(CHANGELOG[0].date, { day: 'numeric', month: 'long', year: 'numeric' }) + '</div></div>' + icon('chev', 'chev') + '</button></div>' +
       '<div class="section-title">Tipps</div><div class="card small muted"><p><b style="color:var(--text)">Als App installieren:</b> Safari → Teilen → „Zum Home-Bildschirm" (iPhone) oder Chrome → „App installieren" (Android). Danach funktioniert alles auch offline.</p><p class="mt8"><b style="color:var(--text)">Gewichte:</b> Langhantel-Übungen nur mit Ständer oder Hilfe laden. Wähle ein Gewicht, mit dem 2 saubere Wiederholungen übrig bleiben.</p><p class="mt8"><b style="color:var(--text)">Schmerz:</b> Bei stechenden Schmerzen abbrechen. Die App ersetzt keine ärztliche oder physiotherapeutische Beratung.</p></div>' +
-      '<p class="tiny muted center mt16">Winterfit · Version 2.0</p>';
+      '<p class="tiny muted center mt16">Winterfit · Version ' + VERSION + '</p>';
   };
   I.name = v => { S.settings.name = v; save(); };
   H.goal = d => { S.settings.goal = Math.min(7, Math.max(1, S.settings.goal + +d.d)); save(); render(); };
@@ -594,6 +595,19 @@
     r.readAsText(f);
   };
   H.resetall = () => confirmSheet('Wirklich alles löschen?', 'Trainings, Messwerte und eigene Workouts werden unwiderruflich entfernt. Erstelle vorher ein Backup.', [{ label: 'Alles löschen', cls: 'danger', fn: () => { S = defaults(); save(); applyTheme(); render(); toast('Daten gelöscht'); } }, { label: 'Abbrechen' }]);
+
+  /* ---- Update-Historie ---- */
+  function changelogBody() {
+    return CHANGELOG.map((c, i) => '<div class="card" style="box-shadow:none"><div class="row"><div class="grow bold">' + esc(c.title) + '</div>' + (i === 0 ? '<span class="chip accent">aktuell</span>' : '') + '</div><div class="tiny muted">Version ' + esc(c.v) + ' · ' + fmtDate(c.date, { day: 'numeric', month: 'long', year: 'numeric' }) + '</div><ul class="cues">' + c.items.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></div>').join('');
+  }
+  H.changelog = () => openSheet(() => ({ title: 'Update-Historie', body: changelogBody() }));
+  function announceUpdate() {
+    const first = !S.history.length && !S.settings.seen && !S.body.length && !S.tests.length && !S.custom.length;
+    if (S.settings.seen !== VERSION) {
+      S.settings.seen = VERSION; save();
+      if (!first) openSheet(() => ({ title: 'Neu in Version ' + VERSION, body: changelogBody() }));
+    }
+  }
 
   /* ================= Workout-Runner ================= */
   let R = null, wakeLock = null, audio = null;
@@ -819,6 +833,7 @@
   applyTheme();
   matchMedia('(prefers-color-scheme: dark)').addEventListener && matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
   render();
+  announceUpdate();
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   window.__winterfit = { get state() { return S; } };
 })();
